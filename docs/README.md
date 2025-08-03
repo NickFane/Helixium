@@ -35,7 +35,7 @@ Helixium/
 │   ├── README.md           # This file
 │   ├── project-setup.md    # Setup and configuration guide
 │   └── development-workflow.md # Development workflow guide
-├── helixum-web/            # Web application
+├── helixium-web/            # Web application
 │   ├── src/                # Source code
 │   │   ├── app/            # Core application files
 │   │   ├── components/     # Reusable UI components
@@ -68,7 +68,7 @@ Helixium/
 2. **Install dependencies**
 
    ```bash
-   cd helixum-web
+   cd helixium-web
    yarn install
    ```
 
@@ -127,7 +127,7 @@ When contributing to the project:
 ## Related Links
 
 - [Project README](../README.md) - Main project overview
-- [Web App README](../helixum-web/README.md) - Web application details
+- [Web App README](../helixium-web/README.md) - Web application details
 - [GitHub Repository](https://github.com/your-org/helixium) - Source code
 
 ---

@@ -1,14 +1,14 @@
-name: Helixum Web CI
+name: Helixium Web CI
 
 on:
   pull_request:
     branches: [main, master]
     paths:
-      - "helixum-web/**"
+      - "helixium-web/**"
   push:
     branches: [main, master]
     paths:
-      - "helixum-web/**"
+      - "helixium-web/**"
 
 jobs:
   test:
@@ -16,7 +16,7 @@ jobs:
 
     defaults:
       run:
-        working-directory: ./helixum-web
+        working-directory: ./helixium-web
 
     steps:
       - name: Checkout code
@@ -27,7 +27,7 @@ jobs:
         with:
           node-version-file: "./.nvmrc"
           cache: "yarn"
-          cache-dependency-path: "./helixum-web/yarn.lock"
+          cache-dependency-path: "./helixium-web/yarn.lock"
 
       - name: Install dependencies
         run: yarn install --frozen-lockfile

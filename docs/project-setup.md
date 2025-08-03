@@ -36,7 +36,7 @@ The project was initialized with a modern Vite.js template that includes:
 The project implements a Bulletproof React folder structure for scalability and maintainability:
 
 ```
-helixum-web/src/
+helixium-web/src/
 ├── app/                    # Core application files
 │   ├── App.tsx            # Main application component
 │   ├── App.css            # Application styles
@@ -83,10 +83,10 @@ helixum-web/src/
 
 ### CI/CD Pipeline
 
-The project includes a GitHub Actions workflow (`.github/workflows/helixum-web-ci.yml`) that:
+The project includes a GitHub Actions workflow (`.github/workflows/helixium-web-ci.yml`) that:
 
 - Runs on pull requests and pushes to main/master branches
-- Only triggers when files in `helixum-web/` directory change
+- Only triggers when files in `helixium-web/` directory change
 - Uses Node.js version from `.nvmrc` file
 - Installs dependencies with Yarn
 - Runs linting (`yarn lint`)
@@ -145,4 +145,4 @@ The Bulletproof React structure supports:
 ## Related Documentation
 
 - [README.md](../README.md) - Project overview
-- [helixum-web/README.md](../helixum-web/README.md) - Web application setup details
+- [helixium-web/README.md](../helixium-web/README.md) - Web application setup details
