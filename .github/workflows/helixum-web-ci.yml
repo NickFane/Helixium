@@ -1,0 +1,39 @@
+name: Helixum Web CI
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "helixum-web/**"
+  push:
+    branches: [main, master]
+    paths:
+      - "helixum-web/**"
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: ./helixum-web
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "./.nvmrc"
+          cache: "yarn"
+          cache-dependency-path: "./helixum-web/yarn.lock"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+
+      - name: Run linting
+        run: yarn lint
+
+      - name: Run build
+        run: yarn build
