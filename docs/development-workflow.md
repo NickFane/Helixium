@@ -25,7 +25,7 @@ This document outlines the development workflow, CI/CD pipeline, and best practi
 2. **Install dependencies**
 
    ```bash
-   cd helixum-web
+   cd helixium-web
    yarn install
    ```
 
@@ -51,13 +51,13 @@ This document outlines the development workflow, CI/CD pipeline, and best practi
 
 ### GitHub Actions Workflow
 
-The project uses GitHub Actions for continuous integration and deployment. The workflow is defined in `.github/workflows/helixum-web-ci.yml`.
+The project uses GitHub Actions for continuous integration and deployment. The workflow is defined in `.github/workflows/helixium-web-ci.yml`.
 
 #### Workflow Triggers
 
 - **Pull Requests** - Runs on PRs to `main` or `master` branches
 - **Push Events** - Runs on pushes to `main` or `master` branches
-- **Path Filtering** - Only triggers when files in `helixum-web/` directory change
+- **Path Filtering** - Only triggers when files in `helixium-web/` directory change
 
 #### Workflow Steps
 
@@ -216,4 +216,4 @@ yarn lint --debug
 
 - [Project Setup](project-setup.md) - Initial setup and configuration
 - [README.md](../README.md) - Project overview
-- [helixum-web/README.md](../helixum-web/README.md) - Web application details
+- [helixium-web/README.md](../helixium-web/README.md) - Web application details
