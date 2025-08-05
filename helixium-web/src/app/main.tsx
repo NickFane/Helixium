@@ -7,7 +7,6 @@ import {
   defaultConfig,
 } from "@chakra-ui/react";
 import "./index.css";
-import App from "./App.tsx";
 import { RouterProvider, createRouter } from "@tanstack/react-router";
 
 // Import the generated route tree
