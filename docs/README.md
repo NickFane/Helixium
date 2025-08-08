@@ -27,6 +27,16 @@ Detailed information about:
 - Pull request process
 - Troubleshooting guide
 
+### 🧠 [Jotai State Management](jotai-state-management.md)
+
+Advanced state management implementation covering:
+
+- Atom architecture and patterns
+- Multiple store isolation
+- Reducer-based state updates
+- Derived atoms for computed values
+- Performance optimization techniques
+
 ## Project Structure
 
 ```
@@ -49,6 +59,7 @@ Helixium/
 │   │   ├── pages/          # Page-level components
 │   │   ├── services/       # API services
 │   │   ├── store/          # State management
+│   │   │   └── atoms/      # Jotai atom definitions
 │   │   └── assets/         # Static assets
 │   └── ...                 # Configuration files
 ├── .github/                # GitHub configuration
