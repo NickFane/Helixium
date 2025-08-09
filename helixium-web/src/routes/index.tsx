@@ -1,4 +1,4 @@
-import { Center, Flex } from "@chakra-ui/react";
+import { Center, Flex, Separator, Text } from "@chakra-ui/react";
 import "../app/App.css";
 import { createFileRoute } from "@tanstack/react-router";
 import ClickDashboard from "@/features/clickDashboard";
@@ -14,16 +14,19 @@ function Index() {
 
   return (
     <>
-      <Flex flexDir={"column"} gap={4}>
+      <Flex flexDir={"column"} gap={4} margin={4}>
         <Center>
-          <h1>Helixium</h1>
+          <Text fontSize={"3xl"} fontWeight={"bold"}>
+            Helixium
+          </Text>
         </Center>
         <Flex justifyContent={"space-between"} gap={4}>
           <Provider store={store1}>
-            <ClickDashboard id="1" />
+            <ClickDashboard id="dashboard-1" />
           </Provider>
+          <Separator orientation="vertical" />
           <Provider store={store2}>
-            <ClickDashboard id="2" />
+            <ClickDashboard id="dashboard-2" />
           </Provider>
         </Flex>
       </Flex>

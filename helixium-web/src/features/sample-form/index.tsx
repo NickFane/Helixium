@@ -10,7 +10,7 @@ import {
   catDetailsAtom,
   catName,
 } from "@/store/atoms/formAtoms";
-import { Card, Flex, Text } from "@chakra-ui/react";
+import { Card, Field, Flex, Separator, Text } from "@chakra-ui/react";
 import { useAtomValue } from "jotai";
 
 const SampleForm = () => {
@@ -45,7 +45,7 @@ const SampleForm = () => {
           formValueAtom={catName}
         />
       </Flex>
-      <Flex flexDir={"column"} margin={4} gap={2}>
+      <Flex flexDir={"column"} margin={4} gap={2} marginTop={12}>
         <Card.Root>
           <Card.Header>
             <Text fontSize={"lg"} fontWeight={"bold"}>
@@ -53,14 +53,41 @@ const SampleForm = () => {
             </Text>
           </Card.Header>
           <Card.Body>
-            <Text>
-              {formState.firstName} {formState.lastName}
-            </Text>
-            <Text>{formState.email}</Text>
-            <Text>{formState.phoneNumber}</Text>
-            <Text>{formState.address}</Text>
-            <Text>{formState.city}</Text>
-            <Text>{catState.name}</Text>
+            <Field.Root>
+              <Field.Label>Name</Field.Label>
+              <Text>
+                {formState.firstName} {formState.lastName}
+              </Text>
+            </Field.Root>
+            <Separator size={"md"} />
+            <Field.Root>
+              <Field.Label>Email</Field.Label>
+              <Text>{formState.email}</Text>
+            </Field.Root>
+            <Separator size={"md"} />
+
+            <Field.Root>
+              <Field.Label>Phone Number</Field.Label>
+              <Text>{formState.phoneNumber}</Text>
+            </Field.Root>
+            <Separator size={"md"} />
+
+            <Field.Root>
+              <Field.Label>Address</Field.Label>
+              <Text>{formState.address}</Text>
+            </Field.Root>
+            <Separator size={"md"} />
+
+            <Field.Root>
+              <Field.Label>City</Field.Label>
+              <Text>{formState.city}</Text>
+            </Field.Root>
+            <Separator size={"md"} />
+
+            <Field.Root>
+              <Field.Label>Cat Name</Field.Label>
+              <Text>{catState.name}</Text>
+            </Field.Root>
           </Card.Body>
           <Card.Footer />
         </Card.Root>
