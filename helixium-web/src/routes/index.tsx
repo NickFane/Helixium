@@ -11,6 +11,7 @@ export const Route = createFileRoute("/")({
 function Index() {
   const store1 = createStore();
   const store2 = createStore();
+
   return (
     <>
       <Flex flexDir={"column"} gap={4}>
