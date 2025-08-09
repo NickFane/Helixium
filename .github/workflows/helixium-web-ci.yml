@@ -5,10 +5,18 @@ on:
     branches: [main, master]
     paths:
       - "helixium-web/**"
+      - "Dockerfile*"
+      - "docker-compose.yml"
+      - "nginx.conf"
+      - ".dockerignore"
   push:
     branches: [main, master]
     paths:
       - "helixium-web/**"
+      - "Dockerfile*"
+      - "docker-compose.yml"
+      - "nginx.conf"
+      - ".dockerignore"
 
 jobs:
   test:
@@ -37,3 +45,36 @@ jobs:
 
       - name: Run build
         run: yarn build
+
+      # Docker Build Validation
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Production Docker Build
+        run: |
+          echo "Building production Docker image..."
+          docker build -t helixium-web-test .
+          echo "✅ Production Docker build successful"
+        working-directory: ./
+
+      - name: Validate Development Docker Build
+        run: |
+          echo "Building development Docker image..."
+          docker build -f Dockerfile.dev -t helixium-web-dev-test .
+          echo "✅ Development Docker build successful"
+        working-directory: ./
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          echo "Validating Docker Compose configuration..."
+          docker compose config
+          echo "✅ Docker Compose configuration is valid"
+        working-directory: ./
+
+      - name: Cleanup Docker Images
+        run: |
+          echo "Cleaning up test Docker images..."
+          docker rmi helixium-web-test || true
+          docker rmi helixium-web-dev-test || true
+          echo "✅ Docker images cleaned up"
+        working-directory: ./

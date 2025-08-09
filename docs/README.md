@@ -26,6 +26,7 @@ Detailed information about:
 - Code quality standards
 - Pull request process
 - Troubleshooting guide
+- Docker build validation in CI/CD
 
 ### 🧠 [Jotai State Management](jotai-state-management.md)
 
@@ -37,6 +38,18 @@ Advanced state management implementation covering:
 - Derived atoms for computed values
 - Performance optimization techniques
 
+### 🐳 [Docker Implementation](docker-implementation.md)
+
+Complete containerization guide covering:
+
+- Multi-stage production builds
+- Development environment with hot reloading
+- Nginx configuration for React SPAs
+- Docker Compose orchestration
+- Performance optimization and security
+- Deployment strategies
+- File structure and overview
+
 ## Project Structure
 
 ```
@@ -44,7 +57,8 @@ Helixium/
 ├── docs/                    # Project documentation
 │   ├── README.md           # This file
 │   ├── project-setup.md    # Setup and configuration guide
-│   └── development-workflow.md # Development workflow guide
+│   ├── development-workflow.md # Development workflow guide
+│   └── docker-implementation.md # Docker containerization guide
 ├── helixium-web/            # Web application
 │   ├── src/                # Source code
 │   │   ├── app/            # Core application files
@@ -62,12 +76,20 @@ Helixium/
 │   │   │   └── atoms/      # Jotai atom definitions
 │   │   └── assets/         # Static assets
 │   └── ...                 # Configuration files
+├── Dockerfile              # Production multi-stage build
+├── Dockerfile.dev          # Development build with hot reloading
+├── docker-compose.yml      # Docker Compose orchestration
+├── nginx.conf              # Nginx configuration for production
+├── .dockerignore           # Docker build exclusions
+├── DOCKER_README.md        # Docker usage instructions
 ├── .github/                # GitHub configuration
 │   └── workflows/          # CI/CD workflows
 └── README.md               # Project overview
 ```
 
 ## Quick Start
+
+### Local Development
 
 1. **Clone the repository**
 
@@ -94,10 +116,28 @@ Helixium/
    yarn build
    ```
 
+### Docker Development
+
+1. **Start with Docker Compose (Production)**
+
+   ```bash
+   docker compose up --build
+   # Access at http://localhost:3000
+   ```
+
+2. **Start with Docker Compose (Development)**
+   ```bash
+   docker compose --profile dev up --build
+   # Access at http://localhost:5173
+   ```
+
+For detailed Docker instructions, see [Docker Implementation](docker-implementation.md).
+
 ## Key Features
 
 - **Modern Tech Stack** - React 19, TypeScript, Vite
 - **Scalable Architecture** - Bulletproof React folder structure
+- **Containerization** - Docker multi-stage builds with Nginx
 - **CI/CD Pipeline** - Automated testing and validation
 - **Type Safety** - Full TypeScript integration
 - **Code Quality** - ESLint with TypeScript support
