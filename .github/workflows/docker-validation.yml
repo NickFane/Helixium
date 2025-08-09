@@ -1,0 +1,84 @@
+name: Docker Validation
+
+on:
+  pull_request:
+    branches: [main, master]
+    paths:
+      - "Dockerfile*"
+      - "docker-compose.yml"
+      - "nginx.conf"
+      - ".dockerignore"
+      - "helixium-web/**"
+  push:
+    branches: [main, master]
+    paths:
+      - "Dockerfile*"
+      - "docker-compose.yml"
+      - "nginx.conf"
+      - ".dockerignore"
+      - "helixium-web/**"
+  workflow_dispatch: # Allow manual triggering
+
+jobs:
+  docker-validation:
+    runs-on: ubuntu-latest
+    name: Validate Docker Builds and Configuration
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Validate Docker Compose Configuration
+        run: |
+          echo "🔍 Validating Docker Compose configuration..."
+          docker compose config
+          echo "✅ Docker Compose configuration is valid"
+        working-directory: ./
+
+      - name: Validate Production Docker Build
+        run: |
+          echo "🔨 Building production Docker image..."
+          docker build -t helixium-web-test .
+          echo "✅ Production Docker build successful"
+        working-directory: ./
+
+      - name: Validate Development Docker Build
+        run: |
+          echo "🔨 Building development Docker image..."
+          docker build -f Dockerfile.dev -t helixium-web-dev-test .
+          echo "✅ Development Docker build successful"
+        working-directory: ./
+
+      - name: Test Production Container Startup
+        run: |
+          echo "🚀 Testing production container startup..."
+          docker run --rm -d --name helixium-web-test-container helixium-web-test
+          sleep 10
+          docker ps | grep helixium-web-test-container
+          docker stop helixium-web-test-container
+          echo "✅ Production container starts successfully"
+        working-directory: ./
+
+      - name: Validate Nginx Configuration
+        run: |
+          echo "🔍 Validating Nginx configuration..."
+          docker run --rm -v $(pwd)/nginx.conf:/etc/nginx/nginx.conf nginx:alpine nginx -t
+          echo "✅ Nginx configuration is valid"
+        working-directory: ./
+
+      - name: Check Docker Image Sizes
+        run: |
+          echo "📊 Docker image sizes:"
+          docker images helixium-web-test helixium-web-dev-test --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+        working-directory: ./
+
+      - name: Cleanup Docker Images
+        run: |
+          echo "🧹 Cleaning up test Docker images..."
+          docker rmi helixium-web-test || true
+          docker rmi helixium-web-dev-test || true
+          echo "✅ Docker images cleaned up"
+        working-directory: ./

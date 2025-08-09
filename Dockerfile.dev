@@ -1,0 +1,26 @@
+# Development Dockerfile for Helixium React application
+FROM node:20-alpine
+
+# Install dependencies for development
+RUN apk add --no-cache libc6-compat
+
+WORKDIR /app
+
+# Copy package files
+COPY helixium-web/package.json helixium-web/yarn.lock* helixium-web/package-lock.json* ./
+
+# Install dependencies
+RUN \
+  if [ -f yarn.lock ]; then yarn install; \
+  elif [ -f package-lock.json ]; then npm install; \
+  else echo "Lockfile not found." && exit 1; \
+  fi
+
+# Copy source code
+COPY helixium-web/ .
+
+# Expose Vite dev server port
+EXPOSE 5173
+
+# Start development server with host binding for Docker
+CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
