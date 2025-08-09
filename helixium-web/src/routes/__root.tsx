@@ -6,7 +6,7 @@ export const Route = createRootRoute({
   component: () => (
     <Flex direction="column" height="100%" width={"600px"}>
       <Flex justifyContent={"center"} gap={4}>
-        <Link to="/">Home</Link> <Link to="/about">About</Link>
+        <Link to="/">Home</Link> <Link to="/SampleFormRoute">Sample Form</Link>
       </Flex>
       <Separator size={"md"} width={"100%"} />
       <Flex flex={1} justifyContent={"center"}>
