@@ -10,9 +10,7 @@ type Props = {
    * The writable atom is used to store the value of the form field and to update the value of the form field.
    * The interface is a bit messy because of a PoC with what kind of atoms we can use.
    */
-  formValueAtom:
-    | PrimitiveAtom<string>
-    | WritableAtom<string | unknown, [unknown], void>;
+  formValueAtom: PrimitiveAtom<string> | WritableAtom<string, [unknown], void>;
 };
 
 const FormField = (props: Props) => {
@@ -22,7 +20,7 @@ const FormField = (props: Props) => {
     <Input
       variant={"flushed"}
       placeholder={props.placeholder}
-      value={formValue as string}
+      value={formValue}
       onChange={(e) => setFormValue(e.target.value)}
     />
   );

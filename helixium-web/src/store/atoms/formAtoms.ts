@@ -1,4 +1,4 @@
-import { atom } from "jotai";
+import { atom, type WritableAtom } from "jotai";
 import { focusAtom } from 'jotai-optics';
 
 export const firstNameAtom = atom("");
@@ -29,4 +29,4 @@ const catDetails = {
 };
 
 export const catDetailsAtom = atom(catDetails);
-export const catName = focusAtom(catDetailsAtom, (optic) => optic.prop("name"));
+export const catName = focusAtom(catDetailsAtom, (optic) => optic.prop("name")) as WritableAtom<string, unknown[], void>;
