@@ -1,6 +1,5 @@
 import { Input } from "@chakra-ui/react";
 import { useAtom, type PrimitiveAtom } from "jotai";
-import React from "react";
 
 type Props = {
   placeholder: string;
