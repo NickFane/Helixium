@@ -72,7 +72,7 @@ jobs:
       - name: Check Docker Image Sizes
         run: |
           echo "📊 Docker image sizes:"
-          docker images helixium-web-test helixium-web-dev-test --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}"
+          docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "(helixium-web-test|helixium-web-dev-test)"
         working-directory: ./
 
       - name: Cleanup Docker Images
