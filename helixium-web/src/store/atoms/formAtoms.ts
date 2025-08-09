@@ -1,4 +1,5 @@
 import { atom } from "jotai";
+import { focusAtom } from 'jotai-optics';
 
 export const firstNameAtom = atom("");
 export const lastNameAtom = atom("");
@@ -15,3 +16,17 @@ export const formAtom = atom((get) => ({
     address: get(addressAtom),
     city: get(cityAtom),
 }));
+
+const catDetails = {
+    name: "Whiskers",
+    age: 2,
+    breed: "Siamese",
+    color: "White",
+    gender: "Male",
+    weight: 10,
+    height: 10,
+    length: 10,
+};
+
+export const catDetailsAtom = atom(catDetails);
+export const catName = focusAtom(catDetailsAtom, (optic) => optic.prop("name"));
