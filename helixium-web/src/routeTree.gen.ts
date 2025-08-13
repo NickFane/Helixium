@@ -9,9 +9,15 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
+import { Route as AboutRouteImport } from './routes/about'
 import { Route as SampleFormRouteRouteImport } from './routes/SampleFormRoute'
 import { Route as IndexRouteImport } from './routes/index'
 
+const AboutRoute = AboutRouteImport.update({
+  id: '/about',
+  path: '/about',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const SampleFormRouteRoute = SampleFormRouteRouteImport.update({
   id: '/SampleFormRoute',
   path: '/SampleFormRoute',
@@ -26,31 +32,42 @@ const IndexRoute = IndexRouteImport.update({
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
   '/SampleFormRoute': typeof SampleFormRouteRoute
+  '/about': typeof AboutRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
   '/SampleFormRoute': typeof SampleFormRouteRoute
+  '/about': typeof AboutRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
   '/': typeof IndexRoute
   '/SampleFormRoute': typeof SampleFormRouteRoute
+  '/about': typeof AboutRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
-  fullPaths: '/' | '/SampleFormRoute'
+  fullPaths: '/' | '/SampleFormRoute' | '/about'
   fileRoutesByTo: FileRoutesByTo
-  to: '/' | '/SampleFormRoute'
-  id: '__root__' | '/' | '/SampleFormRoute'
+  to: '/' | '/SampleFormRoute' | '/about'
+  id: '__root__' | '/' | '/SampleFormRoute' | '/about'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
   IndexRoute: typeof IndexRoute
   SampleFormRouteRoute: typeof SampleFormRouteRoute
+  AboutRoute: typeof AboutRoute
 }
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
+    '/about': {
+      id: '/about'
+      path: '/about'
+      fullPath: '/about'
+      preLoaderRoute: typeof AboutRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/SampleFormRoute': {
       id: '/SampleFormRoute'
       path: '/SampleFormRoute'
@@ -71,6 +88,7 @@ declare module '@tanstack/react-router' {
 const rootRouteChildren: RootRouteChildren = {
   IndexRoute: IndexRoute,
   SampleFormRouteRoute: SampleFormRouteRoute,
+  AboutRoute: AboutRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
