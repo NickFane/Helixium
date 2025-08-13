@@ -23,10 +23,6 @@ on:
       - "terraform/**"
   workflow_dispatch: # Allow manual triggering
 
-env:
-  AWS_REGION: ${{ secrets.AWS_REGION }}
-  ECR_REPOSITORY_URL: ${{ secrets.ECR_REPOSITORY_URL }}
-
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
@@ -37,16 +33,32 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Debug environment
+        run: |
+          echo "GitHub event: ${{ github.event_name }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "SHA: ${{ github.sha }}"
+          echo "AWS Region configured: ${{ vars.AWS_REGION != '' }}"
+          echo "ECR Repository URL configured: ${{ secrets.ECR_REPOSITORY_URL != '' }}"
+          echo "AWS Access Key configured: ${{ secrets.AWS_ACCESS_KEY_ID != '' }}"
+          echo "AWS Secret Key configured: ${{ secrets.AWS_SECRET_ACCESS_KEY != '' }}"
+
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
           aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
-          aws-region: ${{ env.AWS_REGION }}
+          aws-region: ${{ vars.AWS_REGION }}
 
       - name: Login to Amazon ECR
         id: login-ecr
         uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Verify AWS configuration
+        run: |
+          echo "Testing AWS configuration..."
+          aws sts get-caller-identity
+          echo "AWS configuration verified successfully"
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
