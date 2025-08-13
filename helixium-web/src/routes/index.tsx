@@ -14,10 +14,10 @@ function Index() {
 
   return (
     <>
-      <Flex flexDir={"column"} gap={4} margin={4}>
+      <Flex flexDir={"column"} gap={4} maxW="800px" w="100%">
         <Center>
-          <Text fontSize={"3xl"} fontWeight={"bold"}>
-            Helixium
+          <Text fontSize={"2xl"} fontWeight={"semibold"} color="gray.300">
+            Welcome to Helixium
           </Text>
         </Center>
         <Flex justifyContent={"space-between"} gap={4}>
