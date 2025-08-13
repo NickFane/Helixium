@@ -448,19 +448,20 @@ jobs:
           fi
 
           # Set deployment URL for Slack notification
-          if [ "${{ needs.verify-deployment.result }}" = "success" ] && [ -n "${{ needs.verify-deployment.outputs.public-ip }}" ]; then
-            echo "deployment-url=http://${{ needs.verify-deployment.outputs.public-ip }}" >> $GITHUB_OUTPUT
+          if [ "${{ needs.verify-deployment.result }}" = "success" ]; then
+            echo "deployment-url=https://helixium.nicholasfane.com" >> $GITHUB_OUTPUT
           else
             echo "deployment-url=Not available" >> $GITHUB_OUTPUT
           fi
 
-      - name: Notify Slack
+            - name: Notify Slack
         if: always()
         uses: slackapi/slack-github-action@v1.24.0
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
+              "text": "🚀 Helixium Deployment ${{ steps.summary.outputs.deployment-status == 'success' && '✅ Successful' || '❌ Failed' }}",
               "blocks": [
                 {
                   "type": "header",
@@ -510,22 +511,22 @@ jobs:
                       "text": "*Verify:*\n${{ needs.verify-deployment.result == 'success' && '✅ Success' || '❌ Failed' }}"
                     }
                   ]
-                }
-                ,{
+                },
+                {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
                     "text": "*🌐 Application URL:*\n${{ steps.summary.outputs.deployment-url }}"
                   }
-                }
-                ,{
+                },
+                {
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
                     "text": "*📋 Summary:*\n${{ steps.summary.outputs.deployment-status == 'success' && '• Images built and pushed to ECR\n• Application deployed to ECS\n• Ready for testing' || '• Deployment encountered issues\n• Check GitHub Actions logs for details' }}"
                   }
-                }
-                ,{
+                },
+                {
                   "type": "actions",
                   "elements": [
                     {
