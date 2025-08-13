@@ -1,16 +1,11 @@
-name: Deploy Infrastructure and Build Images
+name: Build and Deploy Terraform Infrastructure
 
 on:
   push:
     branches: [main, master]
     paths:
       - "terraform/**"
-      - "Dockerfile*"
-      - "docker-compose.yml"
-      - "nginx.conf"
-      - ".dockerignore"
-      - "helixium-web/**"
-      - ".github/workflows/deploy-and-build.yml"
+      - ".github/workflows/build-and-deploy-terraform.yml"
   workflow_dispatch: # Allow manual triggering
 
 env:
@@ -18,14 +13,12 @@ env:
   AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
 
 jobs:
-  deploy-and-build:
+  deploy-infrastructure:
     runs-on: ubuntu-latest
-    name: Deploy Infrastructure and Build Images
+    name: Deploy Terraform Infrastructure
     environment: dev
 
     steps:
-      # ===== PART 1: INFRASTRUCTURE DEPLOYMENT =====
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -47,7 +40,7 @@ jobs:
           echo "Event name: ${{ github.event_name }}"
           echo "Ref: ${{ github.ref }}"
           echo "Branch: ${{ github.ref_name }}"
-          echo "AWS Region: ${{ vars.AWS_REGION }}"
+          echo "AWS Region: ${{ vars.AWS_REGION || 'ap-southeast-2' }}"
 
       # Step 1: Bootstrap Backend (if needed)
       - name: Bootstrap Terraform Backend
@@ -209,53 +202,7 @@ jobs:
           echo "ECS_CLUSTER_NAME=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_ENV
           echo "ECS_SERVICE_NAME=$(terraform output -raw ecs_service_name)" >> $GITHUB_ENV
 
-      # ===== PART 2: DOCKER BUILD AND PUSH =====
-
-      - name: Login to Amazon ECR
-        id: login-ecr
-        uses: aws-actions/amazon-ecr-login@v2
-
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      # Build and push production Docker image (for main/master)
-      - name: Build and push production Docker image
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: ${{ env.ECR_REPOSITORY_URL }}:latest,${{ env.ECR_REPOSITORY_URL }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Build and push development Docker image (for main/master)
-      - name: Build and push development Docker image
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.dev
-          push: true
-          tags: ${{ env.ECR_DEV_REPOSITORY_URL }}:${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # Build and push development Docker image (for pull requests)
-      - name: Build and push development Docker image (PR)
-        if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.dev
-          push: true
-          tags: ${{ env.ECR_DEV_REPOSITORY_URL }}:pr-${{ github.event.number }}-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      # ===== PART 3: VERIFICATION AND SUMMARY =====
-
+      # Step 5: Verify Deployment
       - name: Verify Deployment
         run: |
           echo "🔍 Verifying deployment..."
@@ -274,9 +221,9 @@ jobs:
 
           echo "✅ Deployment verification completed"
 
-      - name: Deployment Summary
+      - name: Infrastructure Deployment Summary
         run: |
-          echo "🎉 Complete deployment and build completed successfully!"
+          echo "🎉 Terraform infrastructure deployment completed successfully!"
           echo ""
           echo "📋 Deployed Resources:"
           echo "  • S3 Bucket: helixium-terraform-state"
@@ -288,19 +235,10 @@ jobs:
           echo "  • IAM Roles for ECS"
           echo "  • CloudWatch Log Group"
           echo ""
-          echo "🐳 Built and Pushed Images:"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "  • Production: ${{ env.ECR_REPOSITORY_URL }}:latest"
-            echo "  • Production: ${{ env.ECR_REPOSITORY_URL }}:${{ github.sha }}"
-            echo "  • Development: ${{ env.ECR_DEV_REPOSITORY_URL }}:${{ github.sha }}"
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "  • Development: ${{ env.ECR_DEV_REPOSITORY_URL }}:pr-${{ github.event.number }}-${{ github.sha }}"
-          fi
-          echo ""
           echo "🔗 ECR Repository URLs:"
           echo "  Production: ${{ env.ECR_REPOSITORY_URL }}"
           echo "  Development: ${{ env.ECR_DEV_REPOSITORY_URL }}"
           echo ""
           echo "📝 Next steps:"
-          echo "  1. Deploy your application to ECS"
+          echo "  1. Build and deploy your application using the build-and-deploy-application workflow"
           echo "  2. Access your application via the ECS task public IP"

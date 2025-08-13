@@ -1,115 +1,203 @@
-# GitHub Actions Workflows
+# Helixium CI/CD Workflows
 
-This directory contains the GitHub Actions workflows for the Helixium project.
+This directory contains the GitHub Actions workflows for the Helixium project. The workflows have been refactored to provide clear separation of concerns and better maintainability.
 
-## Workflows
+## Workflow Overview
 
-### 1. `deploy-and-build.yml` - Unified Deployment and Build
+### 1. Build and Deploy Terraform Infrastructure
 
-**Purpose**: Handles complete infrastructure deployment and Docker image building in a single workflow.
+**File:** `build-and-deploy-terraform.yml`
 
-**Triggers**:
+**Purpose:** Deploy and manage AWS infrastructure using Terraform.
 
-- Push to `main` or `master` branch
-- Changes to `terraform/**`, `Dockerfile*`, or application files
-- Manual workflow dispatch
+**Triggers:**
 
-**What it does**:
+- Push to `main` or `master` branch with changes to:
+  - `terraform/**` files
+  - The workflow file itself
+- Manual trigger via workflow_dispatch
 
-#### Part 1: Infrastructure Deployment
+**What it does:**
 
-1. **Bootstrap Backend**: Creates S3 bucket and DynamoDB table for Terraform state (if they don't exist)
-2. **Deploy Infrastructure**: Creates all AWS resources (ECR, ECS, VPC, etc.)
-3. **Verify ECR Repositories**: Ensures ECR repositories are created before proceeding
-4. **Get Outputs**: Extracts ECR repository URLs and ECS information
+- Bootstraps Terraform backend (S3 + DynamoDB)
+- Deploys AWS infrastructure:
+  - VPC, subnets, security groups
+  - ECR repositories for Docker images
+  - ECS cluster, task definitions, and services
+  - IAM roles and CloudWatch log groups
+- Verifies infrastructure deployment
+- Outputs ECR repository URLs and ECS service information
 
-#### Part 2: Docker Build and Push
+**When to use:**
 
-1. **Login to ECR**: Authenticates with Amazon ECR
-2. **Build Production Images**: For main/master branch
-3. **Build Development Images**: For main/master and pull requests
-4. **Push Images**: Pushes to the correct ECR repositories
+- Initial infrastructure setup
+- Infrastructure changes (networking, ECS configuration, etc.)
+- Adding new AWS resources
 
-#### Part 3: Verification and Summary
+### 2. Build and Deploy Application
 
-1. **Verify Deployment**: Checks all resources are working
-2. **Deployment Summary**: Provides comprehensive output
+**File:** `build-and-deploy-application.yml`
 
-**Resources Created**:
+**Purpose:** Build Docker images and deploy the application to ECS.
 
-- S3 Bucket: `helixium-terraform-state`
-- DynamoDB Table: `helixium-terraform-locks`
-- ECR Repositories: `helixium-web`, `helixium-web-dev`
-- ECS Cluster: `helixium-cluster`
-- ECS Service: `helixium-service`
-- VPC, Subnets, Security Groups
-- IAM Roles for ECS
-- CloudWatch Log Group
+**Triggers:**
 
-**Images Built and Pushed**:
+- Push to `main` or `master` branch with changes to:
+  - `helixium-web/**` files
+  - `Dockerfile*` files
+  - `docker-compose.yml`
+  - `nginx.conf`
+  - `.dockerignore`
+  - The workflow file itself
+- Manual trigger via workflow_dispatch (with optional image tag)
 
-- Production: `helixium-web:latest`, `helixium-web:{sha}`
-- Development: `helixium-web-dev:{sha}`
-- PR Images: `helixium-web-dev:pr-{number}-{sha}`
+**What it does:**
 
-### 2. `deploy-application.yml` - Application Deployment
+- Verifies infrastructure is deployed
+- Retrieves ECR repository URLs from Terraform outputs
+- Builds and pushes Docker images:
+  - Production image (main/master branch)
+  - Development image (all branches)
+- Updates ECS task definition with new image
+- Deploys to ECS and waits for stability
+- Provides application URL for testing
 
-**Purpose**: Deploys the application to ECS.
+**When to use:**
 
-### 3. `docker-validation.yml` - Docker Validation
+- Application code changes
+- Docker configuration changes
+- New application deployments
 
-**Purpose**: Validates Docker configurations.
+### 3. Docker Validation
 
-### 4. `helixium-web-ci.yml` - Frontend CI
+**File:** `docker-validation.yml`
 
-**Purpose**: Runs CI checks for the frontend application.
+**Purpose:** Validate Docker builds and configurations.
 
-## Workflow Flow
+**Triggers:**
+
+- Pull requests
+- Changes to Docker-related files
+
+**What it does:**
+
+- Validates Dockerfile syntax
+- Tests Docker builds
+- Checks for security vulnerabilities
+
+### 4. Helixium Web CI
+
+**File:** `helixium-web-ci.yml`
+
+**Purpose:** Run tests and linting for the React application.
+
+**Triggers:**
+
+- Changes to `helixium-web/**` files
+- Pull requests
+
+**What it does:**
+
+- Installs dependencies
+- Runs linting
+- Executes tests
+- Builds the application
+
+## Workflow Dependencies
 
 ```
-deploy-and-build.yml → deploy-application.yml
+Infrastructure Deployment (Terraform)
+           ↓
+    ECR Repositories Created
+           ↓
+    Application Deployment
+           ↓
+    ECS Service Running
 ```
 
-1. **deploy-and-build.yml** creates infrastructure and builds images
+## Environment Variables
 
-   - Creates all AWS infrastructure (S3, DynamoDB, ECR, ECS, VPC, etc.)
-   - Builds and pushes Docker images to ECR
-   - Provides comprehensive verification and summary
+### Required Secrets
 
-2. **deploy-application.yml** deploys the application
-   - Deploys the application to ECS using the built images
+- `AWS_ACCESS_KEY_ID`: AWS access key for deployment
+- `AWS_SECRET_ACCESS_KEY`: AWS secret key for deployment
 
-## Environment Variables Required
+### Optional Variables
 
-### Repository Variables
+- `AWS_REGION`: AWS region (defaults to `ap-southeast-2`)
 
-- `AWS_REGION`: AWS region (e.g., `ap-southeast-2`)
-
-### Repository Secrets
-
-- `AWS_ACCESS_KEY_ID`: AWS access key for GitHub Actions user
-- `AWS_SECRET_ACCESS_KEY`: AWS secret key for GitHub Actions user
-
-## Usage
+## Deployment Process
 
 ### First Time Setup
 
-1. Ensure AWS credentials are configured in repository secrets
-2. Push to main branch or manually trigger `deploy-and-build.yml`
-3. The workflow will create all necessary infrastructure and build images
+1. **Deploy Infrastructure:**
 
-### Regular Development
+   - Push changes to `terraform/` folder
+   - This triggers `build-and-deploy-terraform.yml`
+   - Creates all AWS resources including ECR repositories
 
-1. Push changes to trigger the unified workflow
-2. Infrastructure and Docker changes trigger `deploy-and-build.yml`
-3. Application changes trigger `deploy-application.yml`
+2. **Deploy Application:**
+   - Push changes to `helixium-web/` folder
+   - This triggers `build-and-deploy-application.yml`
+   - Builds Docker images and deploys to ECS
 
-## Benefits of Unified Workflow
+### Ongoing Development
 
-- **Single Workflow**: Everything runs together in the correct order
-- **No Dependencies**: No need to coordinate between separate workflows
-- **Better Error Handling**: All steps in one place with comprehensive error reporting
-- **Cleaner State Management**: Consistent state handling across all resources
-- **Easier Debugging**: All logs in one place
-- **Guaranteed Order**: Infrastructure is always created before images are built
-- **Simplified Management**: One workflow to rule them all
+- **Infrastructure changes:** Modify `terraform/` files → triggers infrastructure deployment
+- **Application changes:** Modify `helixium-web/` files → triggers application deployment
+- **Docker changes:** Modify Dockerfiles → triggers application deployment
+
+## Best Practices
+
+1. **Infrastructure First:** Always deploy infrastructure before application
+2. **Test Locally:** Use `terraform plan` to preview infrastructure changes
+3. **Monitor Deployments:** Check workflow logs for any issues
+4. **Use Manual Triggers:** For testing specific image tags or configurations
+5. **Review Changes:** Always review Terraform plans before applying
+
+## Troubleshooting
+
+### Common Issues
+
+1. **Infrastructure Not Deployed:**
+
+   - Run the infrastructure workflow first
+   - Check AWS credentials and permissions
+
+2. **ECR Repository Not Found:**
+
+   - Ensure infrastructure deployment completed successfully
+   - Check Terraform outputs for correct repository URLs
+
+3. **ECS Service Not Starting:**
+
+   - Check task definition and container configuration
+   - Verify security groups and networking
+   - Review CloudWatch logs for container errors
+
+4. **Region Mismatch:**
+   - Ensure all workflows use the same AWS region
+   - Check Terraform state and backend configuration
+
+### Debugging Steps
+
+1. Check workflow logs for specific error messages
+2. Verify AWS resources exist in the correct region
+3. Test Terraform commands locally
+4. Check ECS service events and task logs
+5. Verify ECR repository access and image tags
+
+## Security Considerations
+
+- AWS credentials are stored as GitHub secrets
+- ECR repositories are private by default
+- Security groups restrict access appropriately
+- IAM roles follow least privilege principle
+- Terraform state is encrypted and stored securely
+
+## Cost Optimization
+
+- ECS tasks use minimum Fargate resources (256 CPU, 512MB memory)
+- CloudWatch logs have 7-day retention
+- S3 bucket lifecycle policies can be added for cost management
+- Consider using Spot instances for development environments
