@@ -1,0 +1,191 @@
+name: Terraform Deploy
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "terraform/**"
+      - ".github/workflows/terraform-deploy.yml"
+  workflow_dispatch: # Allow manual triggering
+
+env:
+  TF_VERSION: "1.5.7"
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  terraform-deploy:
+    runs-on: ubuntu-latest
+    name: Terraform Bootstrap and Deploy
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Debug Workflow Context
+        run: |
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "AWS Region: ${{ vars.AWS_REGION }}"
+
+      # Step 1: Bootstrap Backend (if needed)
+      - name: Bootstrap Terraform Backend
+        working-directory: ./terraform/bootstrap
+        run: |
+          echo "🔧 Bootstrapping Terraform backend..."
+
+          # Check if backend resources exist
+          if aws s3api head-bucket --bucket helixium-terraform-state 2>/dev/null; then
+            echo "✅ S3 bucket 'helixium-terraform-state' already exists"
+          else
+            echo "📦 Creating S3 bucket for Terraform state..."
+          fi
+
+          if aws dynamodb describe-table --table-name helixium-terraform-locks 2>/dev/null; then
+            echo "✅ DynamoDB table 'helixium-terraform-locks' already exists"
+          else
+            echo "🔒 Creating DynamoDB table for state locking..."
+          fi
+
+          # Initialize and apply bootstrap
+          terraform init
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+          echo "✅ Backend bootstrap completed"
+
+      # Step 2: Deploy Main Infrastructure
+      - name: Deploy Main Infrastructure
+        working-directory: ./terraform
+        run: |
+          echo "🚀 Deploying main infrastructure..."
+
+          # Wait a moment for backend resources to be fully available
+          echo "⏳ Waiting for backend resources to be fully available..."
+          sleep 10
+
+          # Verify backend resources exist
+          echo "🔍 Verifying backend resources..."
+          if ! aws s3api head-bucket --bucket helixium-terraform-state 2>/dev/null; then
+            echo "❌ S3 bucket does not exist"
+            exit 1
+          fi
+
+          if ! aws dynamodb describe-table --table-name helixium-terraform-locks 2>/dev/null; then
+            echo "❌ DynamoDB table does not exist"
+            exit 1
+          fi
+
+          echo "✅ Backend resources verified"
+
+          # Create backend configuration
+          cat > backend.tf << EOF
+          terraform {
+            backend "s3" {
+              bucket         = "helixium-terraform-state"
+              key            = "terraform.tfstate"
+              region         = "${{ vars.AWS_REGION }}"
+              encrypt        = true
+              dynamodb_table = "helixium-terraform-locks"
+            }
+          }
+          EOF
+
+          # Initialize with remote backend
+          echo "🔧 Initializing Terraform with remote backend..."
+          for i in {1..3}; do
+            echo "Attempt $i of 3..."
+            if terraform init; then
+              echo "✅ Terraform init successful"
+              break
+            else
+              echo "❌ Terraform init failed, attempt $i of 3"
+              if [ $i -eq 3 ]; then
+                echo "❌ All attempts failed"
+                exit 1
+              fi
+              echo "⏳ Waiting 5 seconds before retry..."
+              sleep 5
+            fi
+          done
+
+          # Format check
+          terraform fmt -check
+
+          # Plan and apply
+          terraform plan -out=tfplan
+          terraform apply -auto-approve tfplan
+
+          echo "✅ Main infrastructure deployed successfully"
+
+      # Step 3: Get Outputs
+      - name: Get Infrastructure Outputs
+        working-directory: ./terraform
+        run: |
+          echo "📋 Infrastructure outputs:"
+          echo "ECR Repository URL: $(terraform output -raw ecr_repository_url)"
+          echo "ECR Dev Repository URL: $(terraform output -raw ecr_dev_repository_url)"
+          echo "ECS Cluster: $(terraform output -raw ecs_cluster_name)"
+          echo "ECS Service: $(terraform output -raw ecs_service_name)"
+
+          # Save outputs for other workflows
+          echo "ECR_REPOSITORY_URL=$(terraform output -raw ecr_repository_url)" >> $GITHUB_ENV
+          echo "ECR_DEV_REPOSITORY_URL=$(terraform output -raw ecr_dev_repository_url)" >> $GITHUB_ENV
+          echo "ECS_CLUSTER_NAME=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_ENV
+          echo "ECS_SERVICE_NAME=$(terraform output -raw ecs_service_name)" >> $GITHUB_ENV
+
+      # Step 4: Verify Deployment
+      - name: Verify Deployment
+        run: |
+          echo "🔍 Verifying deployment..."
+
+          # Check ECR repositories
+          echo "Checking ECR repositories..."
+          aws ecr describe-repositories --repository-names helixium-web helixium-web-dev
+
+          # Check ECS cluster
+          echo "Checking ECS cluster..."
+          aws ecs describe-clusters --clusters helixium-cluster
+
+          # Check ECS service
+          echo "Checking ECS service..."
+          aws ecs describe-services --cluster helixium-cluster --services helixium-service
+
+          echo "✅ Deployment verification completed"
+
+      # Step 5: Output Summary
+      - name: Deployment Summary
+        run: |
+          echo "🎉 Terraform deployment completed successfully!"
+          echo ""
+          echo "📋 Deployed Resources:"
+          echo "  • S3 Bucket: helixium-terraform-state"
+          echo "  • DynamoDB Table: helixium-terraform-locks"
+          echo "  • ECR Repositories: helixium-web, helixium-web-dev"
+          echo "  • ECS Cluster: helixium-cluster"
+          echo "  • ECS Service: helixium-service"
+          echo "  • VPC, Subnets, Security Groups"
+          echo "  • IAM Roles for ECS"
+          echo "  • CloudWatch Log Group"
+          echo ""
+          echo "🔗 ECR Repository URLs:"
+          echo "  Production: ${{ env.ECR_REPOSITORY_URL }}"
+          echo "  Development: ${{ env.ECR_DEV_REPOSITORY_URL }}"
+          echo ""
+          echo "📝 Next steps:"
+          echo "  1. Build and push Docker images to ECR"
+          echo "  2. Deploy your application to ECS"
+          echo "  3. Access your application via the ECS task public IP"
