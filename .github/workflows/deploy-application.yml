@@ -37,6 +37,16 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: ${{ vars.AWS_REGION }}
 
+      - name: Check if infrastructure is deployed
+        run: |
+          if aws ecs describe-clusters --clusters ${{ env.ECS_CLUSTER }} --query 'clusters[0].status' --output text 2>/dev/null | grep -q ACTIVE; then
+            echo "ECS cluster is active"
+          else
+            echo "ECS cluster not found or not active"
+            echo "Please run the infrastructure deployment workflow first"
+            exit 1
+          fi
+
       - name: Set image tag
         id: set-tag
         run: |
@@ -46,11 +56,18 @@ jobs:
             echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Download task definition
+      - name: Check if task definition exists
+        id: check-task-def
         run: |
-          aws ecs describe-task-definition \
-            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
-            --query taskDefinition > task-definition.json
+          if aws ecs describe-task-definition --task-definition ${{ env.ECS_TASK_DEFINITION }} --query taskDefinition > task-definition.json 2>/dev/null; then
+            echo "exists=true" >> $GITHUB_OUTPUT
+            echo "Task definition found"
+          else
+            echo "exists=false" >> $GITHUB_OUTPUT
+            echo "Task definition not found - infrastructure may not be deployed"
+            echo "Please run the infrastructure deployment workflow first"
+            exit 1
+          fi
 
       - name: Update task definition
         id: task-def
