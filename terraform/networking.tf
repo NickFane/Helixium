@@ -99,21 +99,22 @@ resource "aws_route_table_association" "private" {
 
 # ALB Security Group removed for cost optimization
 
-# Security Group for ECS Tasks (Direct Access)
+# Security Group for ECS Tasks (ALB Access)
 resource "aws_security_group" "ecs" {
   name        = "helixium-ecs-sg"
-  description = "Security group for ECS tasks with direct HTTP access"
+  description = "Security group for ECS tasks with ALB access"
   vpc_id      = aws_vpc.helixium.id
 
   ingress {
-    description = "HTTP from anywhere"
+    description = "HTTP from ALB"
     from_port   = 80
     to_port     = 80
     protocol    = "tcp"
-    cidr_blocks = ["0.0.0.0/0"]
+    security_groups = [aws_security_group.alb.id]
   }
 
   egress {
+    description = "All outbound traffic (for ECR access)"
     from_port   = 0
     to_port     = 0
     protocol    = "-1"
