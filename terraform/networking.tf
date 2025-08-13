@@ -42,7 +42,7 @@ resource "aws_subnet" "private" {
   cidr_block        = "10.0.${count.index + 10}.0/24"
   availability_zone = data.aws_availability_zones.available.names[count.index]
 
-  map_public_ip_on_launch = true  # Enable public IPs for cost optimization
+  map_public_ip_on_launch = true # Enable public IPs for cost optimization
 
   tags = {
     Name    = "helixium-private-${count.index + 1}"

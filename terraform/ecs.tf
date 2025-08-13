@@ -21,8 +21,8 @@ resource "aws_ecs_task_definition" "helixium" {
   family                   = "helixium"
   network_mode             = "awsvpc"
   requires_compatibilities = ["FARGATE"]
-  cpu                      = 256  # Minimum for Fargate
-  memory                   = 512  # Minimum for Fargate
+  cpu                      = 256 # Minimum for Fargate
+  memory                   = 512 # Minimum for Fargate
   execution_role_arn       = aws_iam_role.ecs_execution_role.arn
   task_role_arn            = aws_iam_role.ecs_task_role.arn
 
@@ -75,13 +75,13 @@ resource "aws_ecs_service" "helixium" {
   name            = "helixium-service"
   cluster         = aws_ecs_cluster.helixium.id
   task_definition = aws_ecs_task_definition.helixium.arn
-  desired_count   = 1  # Minimum for availability
+  desired_count   = 1 # Minimum for availability
   launch_type     = "FARGATE"
 
   network_configuration {
     subnets          = aws_subnet.private[*].id
     security_groups  = [aws_security_group.ecs.id]
-    assign_public_ip = true  # Enable public IPs for direct access
+    assign_public_ip = true # Enable public IPs for direct access
   }
 
   tags = {
