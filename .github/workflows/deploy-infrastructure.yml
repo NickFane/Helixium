@@ -41,9 +41,36 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Check if backend exists
+        id: check-backend
+        run: |
+          if aws s3api head-bucket --bucket helixium-terraform-state 2>/dev/null; then
+            echo "backend_exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Backend bucket exists"
+          else
+            echo "backend_exists=false" >> $GITHUB_OUTPUT
+            echo "❌ Backend bucket not found"
+            echo "Please run the bootstrap workflow first"
+            exit 1
+          fi
+
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: |
+          # Create backend.tf dynamically
+          cat > backend.tf << EOF
+          terraform {
+            backend "s3" {
+              bucket         = "helixium-terraform-state"
+              key            = "terraform.tfstate"
+              region         = "${{ vars.AWS_REGION }}"
+              encrypt        = true
+              dynamodb_table = "helixium-terraform-locks"
+            }
+          }
+          EOF
+
+          terraform init
 
       - name: Terraform Format Check
         working-directory: ./terraform
@@ -84,9 +111,36 @@ jobs:
         with:
           terraform_version: ${{ env.TF_VERSION }}
 
+      - name: Check if backend exists
+        id: check-backend-apply
+        run: |
+          if aws s3api head-bucket --bucket helixium-terraform-state 2>/dev/null; then
+            echo "backend_exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Backend bucket exists"
+          else
+            echo "backend_exists=false" >> $GITHUB_OUTPUT
+            echo "❌ Backend bucket not found"
+            echo "Please run the bootstrap workflow first"
+            exit 1
+          fi
+
       - name: Terraform Init
         working-directory: ./terraform
-        run: terraform init
+        run: |
+          # Create backend.tf dynamically
+          cat > backend.tf << EOF
+          terraform {
+            backend "s3" {
+              bucket         = "helixium-terraform-state"
+              key            = "terraform.tfstate"
+              region         = "${{ vars.AWS_REGION }}"
+              encrypt        = true
+              dynamodb_table = "helixium-terraform-locks"
+            }
+          }
+          EOF
+
+          terraform init
 
       - name: Download Terraform Plan
         uses: actions/download-artifact@v4

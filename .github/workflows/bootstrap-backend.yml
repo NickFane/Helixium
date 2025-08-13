@@ -1,0 +1,81 @@
+name: Bootstrap Terraform Backend
+
+on:
+  workflow_dispatch: # Manual trigger only
+    inputs:
+      confirm_bootstrap:
+        description: 'Type "bootstrap" to confirm backend creation'
+        required: true
+        default: "bootstrap"
+
+env:
+  TF_VERSION: "1.5.7"
+  AWS_REGION: ${{ vars.AWS_REGION }}
+
+jobs:
+  bootstrap:
+    runs-on: ubuntu-latest
+    name: Bootstrap Terraform Backend
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Setup Terraform
+        uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: ${{ env.TF_VERSION }}
+
+      - name: Verify bootstrap confirmation
+        run: |
+          if [ "${{ github.event.inputs.confirm_bootstrap }}" != "bootstrap" ]; then
+            echo "❌ Please type 'bootstrap' to confirm backend creation"
+            exit 1
+          fi
+          echo "✅ Bootstrap confirmed"
+
+      - name: Terraform Init (Bootstrap)
+        working-directory: ./terraform/bootstrap
+        run: terraform init
+
+      - name: Terraform Format Check (Bootstrap)
+        working-directory: ./terraform/bootstrap
+        run: terraform fmt -check
+
+      - name: Terraform Plan (Bootstrap)
+        working-directory: ./terraform/bootstrap
+        run: terraform plan -out=tfplan
+        env:
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+
+      - name: Terraform Apply (Bootstrap)
+        working-directory: ./terraform/bootstrap
+        run: terraform apply -auto-approve tfplan
+        env:
+          TF_VAR_aws_region: ${{ vars.AWS_REGION }}
+
+      - name: Get Backend Configuration
+        working-directory: ./terraform/bootstrap
+        run: |
+          echo "Backend configuration created:"
+          terraform output -raw backend_config
+
+          # Save backend config for next steps
+          terraform output -raw backend_config > backend_config.json
+
+          echo "Backend bucket: $(terraform output -raw state_bucket_name)"
+          echo "Lock table: $(terraform output -raw lock_table_name)"
+
+      - name: Upload Backend Config
+        uses: actions/upload-artifact@v4
+        with:
+          name: backend-config
+          path: terraform/bootstrap/backend_config.json
