@@ -1,12 +1,4 @@
-import {
-  Box,
-  Flex,
-  HStack,
-  IconButton,
-  Stack,
-  Text,
-  Link as ChakraLink,
-} from "@chakra-ui/react";
+import { Box, Flex, HStack, IconButton, Stack, Text } from "@chakra-ui/react";
 import { Link } from "@tanstack/react-router";
 import { useState } from "react";
 
@@ -17,19 +9,23 @@ interface NavLinkProps {
 
 const NavLink = ({ children, to }: NavLinkProps) => (
   <Link to={to}>
-    <ChakraLink
+    <Box
+      as="span"
       px={2}
       py={1}
-      rounded={"md"}
+      borderRadius="md"
       color="gray.200"
+      cursor="pointer"
       _hover={{
-        textDecoration: "none",
         bg: "gray.700",
         color: "white",
       }}
+      _active={{
+        bg: "gray.600",
+      }}
     >
       {children}
-    </ChakraLink>
+    </Box>
   </Link>
 );
 
@@ -38,6 +34,7 @@ export default function Navbar() {
 
   return (
     <Box
+      as="header"
       bg="#1a1a1a"
       px={4}
       shadow="lg"
@@ -48,11 +45,14 @@ export default function Navbar() {
       zIndex={1000}
       borderBottom="1px solid"
       borderColor="gray.700"
+      role="banner"
     >
       <Flex h={16} alignItems={"center"} justifyContent={"space-between"}>
         <IconButton
           size={"md"}
-          aria-label={"Open Menu"}
+          aria-label={isOpen ? "Close menu" : "Open menu"}
+          aria-expanded={isOpen}
+          aria-controls="mobile-menu"
           display={{ md: "none" }}
           onClick={() => setIsOpen(!isOpen)}
         >
@@ -65,7 +65,13 @@ export default function Navbar() {
               Helixium
             </Text>
           </Box>
-          <HStack as={"nav"} gap={4} display={{ base: "none", md: "flex" }}>
+          <HStack
+            as={"nav"}
+            gap={4}
+            display={{ base: "none", md: "flex" }}
+            role="navigation"
+            aria-label="Desktop navigation menu"
+          >
             <NavLink to="/">Home</NavLink>
             <NavLink to="/SampleFormRoute">Sample Form</NavLink>
           </HStack>
@@ -73,7 +79,13 @@ export default function Navbar() {
       </Flex>
 
       {isOpen ? (
-        <Box pb={4} display={{ md: "none" }}>
+        <Box
+          id="mobile-menu"
+          pb={4}
+          display={{ md: "none" }}
+          role="navigation"
+          aria-label="Mobile navigation menu"
+        >
           <Stack as={"nav"} gap={4}>
             <NavLink to="/">Home</NavLink>
             <NavLink to="/SampleFormRoute">Sample Form</NavLink>

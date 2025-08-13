@@ -195,12 +195,12 @@ jobs:
 
           # Function to get public IP with retry logic
           get_public_ip() {
-            local max_attempts=12  # 12 attempts over ~3 minutes
+            local max_attempts=20  # Increased to 20 attempts over ~5 minutes
             local attempt=1
-            local base_delay=10
-            local max_delay=30
+            local base_delay=15
+            local max_delay=45
             
-            echo "🔄 Starting retry loop to get public IP (max $max_attempts attempts, ~3 minutes total)..."
+            echo "🔄 Starting retry loop to get public IP (max $max_attempts attempts, ~5 minutes total)..."
             
             while [ $attempt -le $max_attempts ]; do
               echo "📋 Attempt $attempt/$max_attempts..."
@@ -215,21 +215,43 @@ jobs:
               if [ "$TASK_ARN" != "None" ] && [ -n "$TASK_ARN" ]; then
                 echo "✅ Task found: $TASK_ARN"
                 
-                # Get the public IP
-                PUBLIC_IP=$(aws ecs describe-tasks \
+                # Get detailed task info for debugging
+                echo "🔍 Getting detailed task information..."
+                aws ecs describe-tasks \
                   --cluster ${{ env.ECS_CLUSTER }} \
                   --tasks $TASK_ARN \
-                  --query 'tasks[0].attachments[0].details[?name==`publicIp`].value' \
+                  --query 'tasks[0].{lastStatus:lastStatus,desiredStatus:desiredStatus,healthStatus:healthStatus,attachments:attachments}' \
+                  --output table
+                
+                # Check if task is running
+                TASK_STATUS=$(aws ecs describe-tasks \
+                  --cluster ${{ env.ECS_CLUSTER }} \
+                  --tasks $TASK_ARN \
+                  --query 'tasks[0].lastStatus' \
                   --output text 2>/dev/null || echo "")
+                
+                if [ "$TASK_STATUS" = "RUNNING" ]; then
+                  echo "✅ Task is RUNNING, checking for public IP..."
+                  
+                  # Get the public IP
+                  PUBLIC_IP=$(aws ecs describe-tasks \
+                    --cluster ${{ env.ECS_CLUSTER }} \
+                    --tasks $TASK_ARN \
+                    --query 'tasks[0].attachments[0].details[?name==`publicIp`].value' \
+                    --output text 2>/dev/null || echo "")
 
-                if [ -n "$PUBLIC_IP" ] && [ "$PUBLIC_IP" != "None" ]; then
-                  echo "🎉 Public IP found: $PUBLIC_IP"
-                  echo "🌐 Application deployed successfully!"
-                  echo "🔗 Access your application at: http://$PUBLIC_IP"
-                  echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
-                  return 0
+                  if [ -n "$PUBLIC_IP" ] && [ "$PUBLIC_IP" != "None" ]; then
+                    echo "🎉 Public IP found: $PUBLIC_IP"
+                    echo "🌐 Application deployed successfully!"
+                    echo "🔗 Access your application at: http://$PUBLIC_IP"
+                    echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+                    return 0
+                  else
+                    echo "⏳ Public IP not available yet (attempt $attempt/$max_attempts)"
+                    echo "🔍 Task is running but public IP not yet assigned"
+                  fi
                 else
-                  echo "⏳ Public IP not available yet (attempt $attempt/$max_attempts)"
+                  echo "⏳ Task status: $TASK_STATUS (waiting for RUNNING state)"
                 fi
               else
                 echo "⏳ No tasks found yet (attempt $attempt/$max_attempts)"
@@ -255,6 +277,8 @@ jobs:
             echo "⚠️  Could not retrieve public IP after $max_attempts attempts"
             echo "💡 This is normal - the task may still be starting up"
             echo "🔍 Check the ECS console for task status and public IP"
+            echo "🔗 You can also check the ECS console directly:"
+            echo "   https://console.aws.amazon.com/ecs/home?region=${{ vars.AWS_REGION || 'ap-southeast-2' }}#/clusters/${{ env.ECS_CLUSTER }}/services/${{ env.ECS_SERVICE }}/tasks"
             return 1
           }
 
