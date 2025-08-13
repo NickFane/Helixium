@@ -454,7 +454,7 @@ jobs:
             echo "deployment-url=Not available" >> $GITHUB_OUTPUT
           fi
 
-            - name: Notify Slack
+      - name: Notify Slack
         if: always()
         uses: slackapi/slack-github-action@v1.24.0
         with:
