@@ -66,10 +66,10 @@ jobs:
         working-directory: ./terraform/bootstrap
         run: |
           echo "Backend configuration created:"
-          terraform output -raw backend_config
+          terraform output -json backend_config
 
           # Save backend config for next steps
-          terraform output -raw backend_config > backend_config.json
+          terraform output -json backend_config > backend_config.json
 
           echo "Backend bucket: $(terraform output -raw state_bucket_name)"
           echo "Lock table: $(terraform output -raw lock_table_name)"
