@@ -1,32 +1,51 @@
-name: Docker Validation
+name: Helixium Web Validation
 
 on:
   pull_request:
     branches: [main, master]
     paths:
+      - "helixium-web/**"
       - "Dockerfile*"
       - "docker-compose.yml"
       - "nginx.conf"
       - ".dockerignore"
-      - "helixium-web/**"
-  push:
-    branches: [main, master]
-    paths:
-      - "Dockerfile*"
-      - "docker-compose.yml"
-      - "nginx.conf"
-      - ".dockerignore"
-      - "helixium-web/**"
-  workflow_dispatch: # Allow manual triggering
+  workflow_dispatch: # Allow manual triggering for testing
 
 jobs:
-  docker-validation:
+  validation:
     runs-on: ubuntu-latest
-    name: Validate Docker Builds and Configuration
+    name: PR Quality Gate - Validate Frontend & Docker
 
     steps:
+      # ===== PART 1: FRONTEND VALIDATION =====
+
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version-file: "./helixium-web/.nvmrc"
+          cache: "yarn"
+          cache-dependency-path: "./helixium-web/yarn.lock"
+
+      - name: Install dependencies
+        run: yarn install --frozen-lockfile
+        working-directory: ./helixium-web
+
+      - name: Run linting
+        run: yarn lint
+        working-directory: ./helixium-web
+
+      - name: Run TypeScript check
+        run: yarn tsc --noEmit
+        working-directory: ./helixium-web
+
+      - name: Run build
+        run: yarn build
+        working-directory: ./helixium-web
+
+      # ===== PART 2: DOCKER VALIDATION =====
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -82,3 +101,26 @@ jobs:
           docker rmi helixium-web-dev-test || true
           echo "✅ Docker images cleaned up"
         working-directory: ./
+
+      # ===== PART 3: VALIDATION SUMMARY =====
+
+      - name: Validation Summary
+        run: |
+          echo "🎉 PR Quality Gate - Validation Completed Successfully!"
+          echo ""
+          echo "✅ Frontend Validation:"
+          echo "  • Dependencies installed"
+          echo "  • Linting passed"
+          echo "  • TypeScript check passed"
+          echo "  • Build successful"
+          echo ""
+          echo "✅ Docker Validation:"
+          echo "  • Docker Compose configuration valid"
+          echo "  • Production Docker build successful"
+          echo "  • Development Docker build successful"
+          echo "  • Container startup test passed"
+          echo "  • Nginx configuration valid"
+          echo "  • Docker images cleaned up"
+          echo ""
+          echo "✅ PR Quality Gate Passed!"
+          echo "🚀 This PR is ready for review and merge"

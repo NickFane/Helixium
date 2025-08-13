@@ -68,40 +68,44 @@ This directory contains the GitHub Actions workflows for the Helixium project. T
 - Docker configuration changes
 - New application deployments
 
-### 3. Docker Validation
+### 3. Helixium Web Validation (PR Quality Gate)
 
-**File:** `docker-validation.yml`
+**File:** `helixium-web-validation.yml`
 
-**Purpose:** Validate Docker builds and configurations.
-
-**Triggers:**
-
-- Pull requests
-- Changes to Docker-related files
-
-**What it does:**
-
-- Validates Dockerfile syntax
-- Tests Docker builds
-- Checks for security vulnerabilities
-
-### 4. Helixium Web CI
-
-**File:** `helixium-web-ci.yml`
-
-**Purpose:** Run tests and linting for the React application.
+**Purpose:** PR quality gate that validates frontend application and Docker configuration before merge.
 
 **Triggers:**
 
+- **Pull requests** to main/master branch
 - Changes to `helixium-web/**` files
-- Pull requests
+- Changes to Docker-related files (`Dockerfile*`, `docker-compose.yml`, `nginx.conf`, `.dockerignore`)
+- Manual trigger for testing
 
 **What it does:**
 
-- Installs dependencies
-- Runs linting
-- Executes tests
-- Builds the application
+#### Frontend Validation:
+
+- Installs dependencies with Yarn
+- Runs ESLint for code quality
+- Performs TypeScript type checking
+- Builds the application for production
+
+#### Docker Validation:
+
+- Validates Docker Compose configuration
+- Tests production and development Docker builds
+- Verifies container startup functionality
+- Validates Nginx configuration
+- Reports Docker image sizes
+- Cleans up test images
+
+#### PR Quality Gate Benefits:
+
+- **Pre-Merge Validation**: Ensures code quality before PR merge
+- **Comprehensive Testing**: Validates both frontend and Docker changes
+- **Quality Assurance**: Prevents broken builds from reaching main branch
+- **Clear Feedback**: Detailed reporting for PR reviewers
+- **Manual Override**: Can be triggered manually for testing
 
 ## Workflow Dependencies
 
