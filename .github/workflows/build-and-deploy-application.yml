@@ -511,29 +511,20 @@ jobs:
                     }
                   ]
                 }
-                ${{ steps.summary.outputs.deployment-url != 'Not available' && format('
                 ,{
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*🌐 Application URL:*\n{0}"
+                    "text": "*🌐 Application URL:*\n${{ steps.summary.outputs.deployment-url }}"
                   }
-                }', steps.summary.outputs.deployment-url) || '' }}
-                ${{ steps.summary.outputs.deployment-status == 'success' && '
+                }
                 ,{
                   "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "*📋 Summary:*\n• Images built and pushed to ECR\n• Application deployed to ECS\n• Ready for testing"
+                    "text": "*📋 Summary:*\n${{ steps.summary.outputs.deployment-status == 'success' && '• Images built and pushed to ECR\n• Application deployed to ECS\n• Ready for testing' || '• Deployment encountered issues\n• Check GitHub Actions logs for details' }}"
                   }
-                }' || '
-                ,{
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "*📋 Summary:*\n• Deployment encountered issues\n• Check GitHub Actions logs for details"
-                  }
-                }' }}
+                }
                 ,{
                   "type": "actions",
                   "elements": [
@@ -545,15 +536,14 @@ jobs:
                       },
                       "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                     }
-                    ${{ steps.summary.outputs.deployment-url != 'Not available' && format('
-                    ,{
+                    ${{ steps.summary.outputs.deployment-url != 'Not available' && ',{
                       "type": "button",
                       "text": {
                         "type": "plain_text",
                         "text": "Test Application"
                       },
-                      "url": "{0}"
-                    }', steps.summary.outputs.deployment-url) || '' }}
+                      "url": "${{ steps.summary.outputs.deployment-url }}"
+                    }' || '' }}
                   ]
                 }
               ]
