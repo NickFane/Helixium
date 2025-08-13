@@ -29,11 +29,15 @@ env:
   ECS_TASK_DEFINITION: "helixium"
 
 jobs:
-  build-and-deploy:
+  setup:
     runs-on: ubuntu-latest
-    name: Build and Deploy Application
+    name: Setup and Validation
     environment: dev
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
+    outputs:
+      ecr-repo-url: ${{ steps.get-ecr-urls.outputs.ecr-repo-url }}
+      ecr-dev-repo-url: ${{ steps.get-ecr-urls.outputs.ecr-dev-repo-url }}
+      image-tag: ${{ steps.set-tag.outputs.tag }}
 
     steps:
       - name: Checkout code
@@ -69,6 +73,7 @@ jobs:
           fi
 
       - name: Get ECR Repository URLs
+        id: get-ecr-urls
         run: |
           echo "🔍 Getting ECR repository URLs..."
 
@@ -88,8 +93,8 @@ jobs:
             --output text 2>/dev/null || echo "")
 
           if [ -n "$ECR_REPO_URL" ] && [ -n "$ECR_DEV_REPO_URL" ]; then
-            echo "ECR_REPOSITORY_URL=$ECR_REPO_URL" >> $GITHUB_ENV
-            echo "ECR_DEV_REPOSITORY_URL=$ECR_DEV_REPO_URL" >> $GITHUB_ENV
+            echo "ecr-repo-url=$ECR_REPO_URL" >> $GITHUB_OUTPUT
+            echo "ecr-dev-repo-url=$ECR_DEV_REPO_URL" >> $GITHUB_OUTPUT
             echo "✅ ECR repository URLs retrieved from AWS"
             echo "  Production: $ECR_REPO_URL"
             echo "  Development: $ECR_DEV_REPO_URL"
@@ -120,7 +125,30 @@ jobs:
             echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
           fi
 
-      # Build and push production Docker image (for main/master)
+  build-images:
+    runs-on: ubuntu-latest
+    name: 🐳 Build Docker Images
+    needs: setup
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
       - name: Build and push production Docker image
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v5
@@ -128,11 +156,10 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ env.ECR_REPOSITORY_URL }}:latest,${{ env.ECR_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}
+          tags: ${{ needs.setup.outputs.ecr-repo-url }}:latest,${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Build and push development Docker image (for main/master)
       - name: Build and push development Docker image
         if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
         uses: docker/build-push-action@v5
@@ -140,11 +167,10 @@ jobs:
           context: .
           file: ./Dockerfile.dev
           push: true
-          tags: ${{ env.ECR_DEV_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}
+          tags: ${{ needs.setup.outputs.ecr-dev-repo-url }}:${{ needs.setup.outputs.image-tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      # Build and push development Docker image (for pull requests)
       - name: Build and push development Docker image (PR)
         if: github.event_name == 'pull_request'
         uses: docker/build-push-action@v5
@@ -152,9 +178,26 @@ jobs:
           context: .
           file: ./Dockerfile.dev
           push: true
-          tags: ${{ env.ECR_DEV_REPOSITORY_URL }}:pr-${{ github.event.number }}-${{ github.sha }}
+          tags: ${{ needs.setup.outputs.ecr-dev-repo-url }}:pr-${{ github.event.number }}-${{ github.sha }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
+
+  deploy-ecs:
+    runs-on: ubuntu-latest
+    name: 🚀 Deploy to ECS
+    needs: [setup, build-images]
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
 
       - name: Check if task definition exists
         id: check-task-def
@@ -175,7 +218,7 @@ jobs:
         with:
           task-definition: task-definition.json
           container-name: helixium-web
-          image: ${{ env.ECR_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}
+          image: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}
 
       - name: Deploy to Amazon ECS
         uses: aws-actions/amazon-ecs-deploy-task-definition@v1
@@ -184,6 +227,20 @@ jobs:
           service: ${{ env.ECS_SERVICE }}
           cluster: ${{ env.ECS_CLUSTER }}
           wait-for-service-stability: false
+
+  verify-deployment:
+    runs-on: ubuntu-latest
+    name: 🔍 Verify Deployment
+    needs: [setup, deploy-ecs]
+    environment: dev
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
 
       - name: Get deployment URL
         run: |
@@ -195,12 +252,12 @@ jobs:
 
           # Function to get public IP with retry logic
           get_public_ip() {
-            local max_attempts=20  # Increased to 20 attempts over ~5 minutes
+            local max_attempts=10  # Reduced to 10 attempts over ~2 minutes
             local attempt=1
-            local base_delay=15
-            local max_delay=45
+            local base_delay=10
+            local max_delay=30
             
-            echo "🔄 Starting retry loop to get public IP (max $max_attempts attempts, ~5 minutes total)..."
+            echo "🔄 Starting retry loop to get public IP (max $max_attempts attempts, ~2 minutes total)..."
             
             while [ $attempt -le $max_attempts ]; do
               echo "📋 Attempt $attempt/$max_attempts..."
@@ -233,12 +290,31 @@ jobs:
                 if [ "$TASK_STATUS" = "RUNNING" ]; then
                   echo "✅ Task is RUNNING, checking for public IP..."
                   
-                  # Get the public IP
+                  # Get the public IP - using the correct query for ECS tasks
                   PUBLIC_IP=$(aws ecs describe-tasks \
                     --cluster ${{ env.ECS_CLUSTER }} \
                     --tasks $TASK_ARN \
                     --query 'tasks[0].attachments[0].details[?name==`publicIp`].value' \
                     --output text 2>/dev/null || echo "")
+                  
+                  # If the above doesn't work, try alternative approach
+                  if [ -z "$PUBLIC_IP" ] || [ "$PUBLIC_IP" = "None" ]; then
+                    echo "🔍 Trying alternative method to get public IP..."
+                    # Get the ENI ID first
+                    ENI_ID=$(aws ecs describe-tasks \
+                      --cluster ${{ env.ECS_CLUSTER }} \
+                      --tasks $TASK_ARN \
+                      --query 'tasks[0].attachments[0].details[?name==`networkInterfaceId`].value' \
+                      --output text 2>/dev/null || echo "")
+                    
+                    if [ -n "$ENI_ID" ] && [ "$ENI_ID" != "None" ]; then
+                      echo "🔍 Found ENI: $ENI_ID, getting public IP..."
+                      PUBLIC_IP=$(aws ec2 describe-network-interfaces \
+                        --network-interface-ids $ENI_ID \
+                        --query 'NetworkInterfaces[0].Association.PublicIp' \
+                        --output text 2>/dev/null || echo "")
+                    fi
+                  fi
 
                   if [ -n "$PUBLIC_IP" ] && [ "$PUBLIC_IP" != "None" ]; then
                     echo "🎉 Public IP found: $PUBLIC_IP"
@@ -275,33 +351,42 @@ jobs:
             done
             
             echo "⚠️  Could not retrieve public IP after $max_attempts attempts"
-            echo "💡 This is normal - the task may still be starting up"
+            echo "💡 This is normal - the task may still be starting up or the public IP may not be available yet"
             echo "🔍 Check the ECS console for task status and public IP"
             echo "🔗 You can also check the ECS console directly:"
             echo "   https://console.aws.amazon.com/ecs/home?region=${{ vars.AWS_REGION || 'ap-southeast-2' }}#/clusters/${{ env.ECS_CLUSTER }}/services/${{ env.ECS_SERVICE }}/tasks"
+            echo "🌐 Or check the Application Load Balancer if you're using one"
             return 1
           }
 
           # Call the function
           get_public_ip
 
+  summary:
+    runs-on: ubuntu-latest
+    name: 📋 Deployment Summary
+    needs: [setup, build-images, deploy-ecs, verify-deployment]
+    environment: dev
+    if: always()
+
+    steps:
       - name: Application Deployment Summary
         run: |
           echo "🎉 Application build and deployment completed successfully!"
           echo ""
           echo "🐳 Built and Pushed Images:"
           if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "  • Production: ${{ env.ECR_REPOSITORY_URL }}:latest"
-            echo "  • Production: ${{ env.ECR_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}"
-            echo "  • Development: ${{ env.ECR_DEV_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}"
+            echo "  • Production: ${{ needs.setup.outputs.ecr-repo-url }}:latest"
+            echo "  • Production: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}"
+            echo "  • Development: ${{ needs.setup.outputs.ecr-dev-repo-url }}:${{ needs.setup.outputs.image-tag }}"
           elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "  • Development: ${{ env.ECR_DEV_REPOSITORY_URL }}:pr-${{ github.event.number }}-${{ github.sha }}"
+            echo "  • Development: ${{ needs.setup.outputs.ecr-dev-repo-url }}:pr-${{ github.event.number }}-${{ github.sha }}"
           fi
           echo ""
           echo "🚀 Deployed to ECS:"
           echo "  • Cluster: ${{ env.ECS_CLUSTER }}"
           echo "  • Service: ${{ env.ECS_SERVICE }}"
-          echo "  • Image: ${{ env.ECR_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}"
+          echo "  • Image: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}"
           echo ""
           if [ -n "${{ env.PUBLIC_IP }}" ]; then
             echo "🌐 Application URL: http://${{ env.PUBLIC_IP }}"
