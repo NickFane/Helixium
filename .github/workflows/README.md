@@ -4,22 +4,36 @@ This directory contains the GitHub Actions workflows for the Helixium project.
 
 ## Workflows
 
-### 1. `terraform-deploy.yml` - Unified Terraform Deployment
+### 1. `deploy-and-build.yml` - Unified Deployment and Build
 
-**Purpose**: Handles both bootstrap and infrastructure deployment in a single workflow.
+**Purpose**: Handles complete infrastructure deployment and Docker image building in a single workflow.
 
 **Triggers**:
 
 - Push to `main` or `master` branch
-- Changes to `terraform/**` files
+- Changes to `terraform/**`, `Dockerfile*`, or application files
 - Manual workflow dispatch
 
 **What it does**:
 
+#### Part 1: Infrastructure Deployment
+
 1. **Bootstrap Backend**: Creates S3 bucket and DynamoDB table for Terraform state (if they don't exist)
 2. **Deploy Infrastructure**: Creates all AWS resources (ECR, ECS, VPC, etc.)
-3. **Verify Deployment**: Checks that all resources were created successfully
-4. **Output Summary**: Provides deployment information and next steps
+3. **Verify ECR Repositories**: Ensures ECR repositories are created before proceeding
+4. **Get Outputs**: Extracts ECR repository URLs and ECS information
+
+#### Part 2: Docker Build and Push
+
+1. **Login to ECR**: Authenticates with Amazon ECR
+2. **Build Production Images**: For main/master branch
+3. **Build Development Images**: For main/master and pull requests
+4. **Push Images**: Pushes to the correct ECR repositories
+
+#### Part 3: Verification and Summary
+
+1. **Verify Deployment**: Checks all resources are working
+2. **Deployment Summary**: Provides comprehensive output
 
 **Resources Created**:
 
@@ -32,55 +46,37 @@ This directory contains the GitHub Actions workflows for the Helixium project.
 - IAM Roles for ECS
 - CloudWatch Log Group
 
-### 2. `build-and-push.yml` - Docker Image Building
+**Images Built and Pushed**:
 
-**Purpose**: Builds and pushes Docker images to ECR.
+- Production: `helixium-web:latest`, `helixium-web:{sha}`
+- Development: `helixium-web-dev:{sha}`
+- PR Images: `helixium-web-dev:pr-{number}-{sha}`
 
-**Triggers**:
-
-- Push to `main` or `master` branch
-- Pull requests
-- Changes to Docker-related files
-- Manual workflow dispatch
-
-**What it does**:
-
-- Builds production images for main/master branch
-- Builds development images for pull requests
-- Pushes images to appropriate ECR repositories
-
-### 3. `deploy-application.yml` - Application Deployment
+### 2. `deploy-application.yml` - Application Deployment
 
 **Purpose**: Deploys the application to ECS.
 
-### 4. `docker-validation.yml` - Docker Validation
+### 3. `docker-validation.yml` - Docker Validation
 
 **Purpose**: Validates Docker configurations.
 
-### 5. `helixium-web-ci.yml` - Frontend CI
+### 4. `helixium-web-ci.yml` - Frontend CI
 
 **Purpose**: Runs CI checks for the frontend application.
 
-## Workflow Dependencies
+## Workflow Flow
 
 ```
-terraform-deploy.yml → build-and-push.yml → deploy-application.yml
+deploy-and-build.yml → deploy-application.yml
 ```
 
-1. **terraform-deploy.yml** creates the infrastructure
+1. **deploy-and-build.yml** creates infrastructure and builds images
 
-   - Creates S3 bucket and DynamoDB table for Terraform state
-   - Creates ECR repositories, ECS cluster, VPC, etc.
-   - Outputs ECR repository URLs and ECS information
+   - Creates all AWS infrastructure (S3, DynamoDB, ECR, ECS, VPC, etc.)
+   - Builds and pushes Docker images to ECR
+   - Provides comprehensive verification and summary
 
-2. **build-and-push.yml** builds and pushes Docker images
-
-   - **Triggers automatically** after `terraform-deploy.yml` completes successfully
-   - Uses ECR repository URLs from the terraform outputs
-   - Builds production images for main/master branch
-   - Builds development images for pull requests
-
-3. **deploy-application.yml** deploys the application
+2. **deploy-application.yml** deploys the application
    - Deploys the application to ECS using the built images
 
 ## Environment Variables Required
@@ -99,20 +95,21 @@ terraform-deploy.yml → build-and-push.yml → deploy-application.yml
 ### First Time Setup
 
 1. Ensure AWS credentials are configured in repository secrets
-2. Push to main branch or manually trigger `terraform-deploy.yml`
-3. The workflow will create all necessary infrastructure
+2. Push to main branch or manually trigger `deploy-and-build.yml`
+3. The workflow will create all necessary infrastructure and build images
 
 ### Regular Development
 
-1. Push changes to trigger appropriate workflows
-2. Infrastructure changes trigger `terraform-deploy.yml`
-3. Docker changes trigger `build-and-push.yml`
-4. Application changes trigger `deploy-application.yml`
+1. Push changes to trigger the unified workflow
+2. Infrastructure and Docker changes trigger `deploy-and-build.yml`
+3. Application changes trigger `deploy-application.yml`
 
 ## Benefits of Unified Workflow
 
-- **Simplified Management**: Single workflow handles both bootstrap and deployment
-- **No Dependencies**: No need to run workflows in sequence
-- **Better Error Handling**: All steps in one place with proper error reporting
+- **Single Workflow**: Everything runs together in the correct order
+- **No Dependencies**: No need to coordinate between separate workflows
+- **Better Error Handling**: All steps in one place with comprehensive error reporting
 - **Cleaner State Management**: Consistent state handling across all resources
 - **Easier Debugging**: All logs in one place
+- **Guaranteed Order**: Infrastructure is always created before images are built
+- **Simplified Management**: One workflow to rule them all
