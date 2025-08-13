@@ -245,6 +245,24 @@ location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg|woff|woff2|ttf|eot)$ {
 4. **Security Headers**: Protects against common vulnerabilities
 5. **Health Check Endpoint**: `/health` for monitoring
 
+### Health Check Implementation
+
+The nginx configuration includes a dedicated health check endpoint:
+
+```nginx
+location /health {
+    access_log off;
+    return 200 "healthy\n";
+    add_header Content-Type text/plain;
+}
+```
+
+This endpoint:
+- Returns HTTP 200 with "healthy" message
+- Disables access logging to reduce noise
+- Used by ECS, Docker, and load balancer health checks
+- Responds quickly without database or application logic
+
 ## Docker Compose Orchestration
 
 ### Production Configuration
