@@ -44,58 +44,7 @@ resource "aws_ecr_repository" "helixium_web_dev" {
   }
 }
 
-# IAM User for GitHub Actions
-resource "aws_iam_user" "github_actions" {
-  name = "github-actions-helixium"
-  path = "/system/"
 
-  tags = {
-    Name    = "github-actions-helixium"
-    Project = "helixium"
-  }
-}
-
-# IAM Policy for ECR access
-resource "aws_iam_policy" "ecr_access" {
-  name        = "helixium-ecr-access"
-  description = "Policy for GitHub Actions to push to ECR"
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Effect = "Allow"
-        Action = [
-          "ecr:GetAuthorizationToken",
-          "ecr:BatchCheckLayerAvailability",
-          "ecr:GetDownloadUrlForLayer",
-          "ecr:BatchGetImage",
-          "ecr:PutImage",
-          "ecr:InitiateLayerUpload",
-          "ecr:UploadLayerPart",
-          "ecr:CompleteLayerUpload"
-        ]
-        Resource = [
-          aws_ecr_repository.helixium_web.arn,
-          aws_ecr_repository.helixium_web_dev.arn
-        ]
-      },
-      {
-        Effect = "Allow"
-        Action = [
-          "ecr:GetAuthorizationToken"
-        ]
-        Resource = "*"
-      }
-    ]
-  })
-}
-
-# Attach policy to IAM user
-resource "aws_iam_user_policy_attachment" "github_actions_ecr" {
-  user       = aws_iam_user.github_actions.name
-  policy_arn = aws_iam_policy.ecr_access.arn
-}
 
 # Outputs
 output "ecr_repository_url" {
