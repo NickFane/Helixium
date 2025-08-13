@@ -140,13 +140,52 @@ jobs:
           # Format check
           terraform fmt -check
 
-          # Plan and apply
-          terraform plan -out=tfplan
-          terraform apply -auto-approve tfplan
+          # Plan and apply with better error handling
+          echo "📋 Planning Terraform deployment..."
+          if ! terraform plan -var="aws_region=${{ vars.AWS_REGION }}" -out=tfplan; then
+            echo "❌ Terraform plan failed"
+            exit 1
+          fi
+
+          echo "🚀 Applying Terraform configuration..."
+          if ! terraform apply -auto-approve tfplan; then
+            echo "❌ Terraform apply failed"
+            echo "🔍 Checking what resources were created..."
+            terraform state list || echo "No state available"
+            exit 1
+          fi
 
           echo "✅ Main infrastructure deployed successfully"
 
-      # Step 3: Get Outputs
+      # Step 3: Verify ECR Repositories Were Created
+      - name: Verify ECR Repositories Created
+        working-directory: ./terraform
+        run: |
+          echo "🔍 Verifying ECR repositories were created..."
+
+          # Wait for ECR repositories to be available
+          for i in {1..10}; do
+            echo "Checking ECR repositories (attempt $i of 10)..."
+            
+            if aws ecr describe-repositories --repository-names helixium-web helixium-web-dev 2>/dev/null; then
+              echo "✅ ECR repositories exist!"
+              break
+            else
+              echo "❌ ECR repositories not found yet..."
+              if [ $i -eq 10 ]; then
+                echo "❌ ECR repositories still don't exist after 10 attempts"
+                echo "🔍 Checking Terraform state..."
+                terraform state list || echo "No state available"
+                echo "🔍 Checking Terraform outputs..."
+                terraform output || echo "No outputs available"
+                exit 1
+              fi
+              echo "⏳ Waiting 10 seconds before retry..."
+              sleep 10
+            fi
+          done
+
+      # Step 4: Get Outputs
       - name: Get Infrastructure Outputs
         working-directory: ./terraform
         run: |
@@ -162,7 +201,7 @@ jobs:
           echo "ECS_CLUSTER_NAME=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_ENV
           echo "ECS_SERVICE_NAME=$(terraform output -raw ecs_service_name)" >> $GITHUB_ENV
 
-      # Step 3.5: Set Workflow Outputs
+      # Step 4.5: Set Workflow Outputs
       - name: Set Workflow Outputs
         run: |
           echo "ecr-repository-url=${{ env.ECR_REPOSITORY_URL }}" >> $GITHUB_OUTPUT
@@ -170,7 +209,7 @@ jobs:
           echo "ecs-cluster-name=${{ env.ECS_CLUSTER_NAME }}" >> $GITHUB_OUTPUT
           echo "ecs-service-name=${{ env.ECS_SERVICE_NAME }}" >> $GITHUB_OUTPUT
 
-      # Step 4: Verify Deployment
+      # Step 5: Verify Deployment
       - name: Verify Deployment
         run: |
           echo "🔍 Verifying deployment..."
@@ -189,7 +228,7 @@ jobs:
 
           echo "✅ Deployment verification completed"
 
-      # Step 5: Output Summary
+      # Step 6: Output Summary
       - name: Deployment Summary
         run: |
           echo "🎉 Terraform deployment completed successfully!"
