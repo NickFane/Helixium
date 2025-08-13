@@ -1,4 +1,4 @@
-import { Center, Flex, Text, Box } from "@chakra-ui/react";
+import { Center, Flex, Text, Box, Heading } from "@chakra-ui/react";
 import { createFileRoute } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/about")({
@@ -9,13 +9,13 @@ function About() {
   return (
     <Flex flexDir={"column"} gap={6} maxW="800px" w="100%">
       <Center>
-        <Text fontSize={"3xl"} fontWeight={"bold"} color="white" mb={4}>
+        <Heading as="h1" size="xl" mb={4}>
           About Helixium
-        </Text>
+        </Heading>
       </Center>
       
       <Box bg="gray.800" p={6} borderRadius="lg" border="1px solid" borderColor="gray.700">
-        <Text fontSize={"lg"} color="gray.200" mb={4}>
+        <Text fontSize={"lg"} color="gray.100" mb={4}>
           Welcome to Helixium - A Modern Web Application
         </Text>
         
