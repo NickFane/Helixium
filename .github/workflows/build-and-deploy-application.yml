@@ -366,7 +366,11 @@ jobs:
     if: always()
 
     steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
       - name: Application Deployment Summary
+        id: summary
         run: |
           echo "📋 Deployment Summary"
           echo "=================="
@@ -435,8 +439,124 @@ jobs:
             echo "  1. Test your application at the provided URL"
             echo "  2. Monitor logs in CloudWatch"
             echo "  3. Scale your service as needed"
+            echo "deployment-status=success" >> $GITHUB_OUTPUT
           else
             echo "  1. Check the deployment job logs for errors"
             echo "  2. Verify infrastructure is properly deployed"
             echo "  3. Retry the deployment if needed"
+            echo "deployment-status=failure" >> $GITHUB_OUTPUT
           fi
+
+          # Set deployment URL for Slack notification
+          if [ "${{ needs.verify-deployment.result }}" = "success" ] && [ -n "${{ needs.verify-deployment.outputs.public-ip }}" ]; then
+            echo "deployment-url=http://${{ needs.verify-deployment.outputs.public-ip }}" >> $GITHUB_OUTPUT
+          else
+            echo "deployment-url=Not available" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Notify Slack
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          payload: |
+            {
+              "blocks": [
+                {
+                  "type": "header",
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🚀 Helixium Deployment ${{ steps.summary.outputs.deployment-status == 'success' && '✅ Successful' || '❌ Failed' }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Repository:*\n${{ github.repository }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Commit:*\n${{ github.sha }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Triggered by:*\n${{ github.actor }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Setup:*\n${{ needs.setup.result == 'success' && '✅ Success' || '❌ Failed' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Build:*\n${{ needs.build-images.result == 'success' && '✅ Success' || '❌ Failed' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Deploy:*\n${{ needs.deploy-ecs.result == 'success' && '✅ Success' || '❌ Failed' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Verify:*\n${{ needs.verify-deployment.result == 'success' && '✅ Success' || '❌ Failed' }}"
+                    }
+                  ]
+                }
+                ${{ steps.summary.outputs.deployment-url != 'Not available' && format('
+                ,{
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*🌐 Application URL:*\n{0}"
+                  }
+                }', steps.summary.outputs.deployment-url) || '' }}
+                ${{ steps.summary.outputs.deployment-status == 'success' && '
+                ,{
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📋 Summary:*\n• Images built and pushed to ECR\n• Application deployed to ECS\n• Ready for testing"
+                  }
+                }' || '
+                ,{
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "*📋 Summary:*\n• Deployment encountered issues\n• Check GitHub Actions logs for details"
+                  }
+                }' }}
+                ,{
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                    ${{ steps.summary.outputs.deployment-url != 'Not available' && format('
+                    ,{
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Test Application"
+                      },
+                      "url": "{0}"
+                    }', steps.summary.outputs.deployment-url) || '' }}
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}

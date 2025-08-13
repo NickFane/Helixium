@@ -1,0 +1,27 @@
+# Alternative: Simple Slack Webhook Notification
+# This is easier to set up but less feature-rich
+
+- name: Notify Slack (Webhook)
+  if: always()
+  run: |
+    # Create the message
+    MESSAGE="🚀 *Helixium Deployment ${{ steps.summary.outputs.deployment-status == 'success' && '✅ Successful' || '❌ Failed' }}*
+
+    *Repository:* ${{ github.repository }}
+    *Branch:* ${{ github.ref_name }}
+    *Triggered by:* ${{ github.actor }}
+
+    *Job Results:*
+    • Setup: ${{ needs.setup.result == 'success' && '✅' || '❌' }}
+    • Build: ${{ needs.build-images.result == 'success' && '✅' || '❌' }}
+    • Deploy: ${{ needs.deploy-ecs.result == 'success' && '✅' || '❌' }}
+    • Verify: ${{ needs.verify-deployment.result == 'success' && '✅' || '❌' }}
+
+    ${{ steps.summary.outputs.deployment-url != 'Not available' && format('*Application URL:* {0}', steps.summary.outputs.deployment-url) || '' }}
+
+    <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|View Workflow>"
+
+    # Send to Slack
+    curl -X POST -H 'Content-type: application/json' \
+      --data "{\"text\":\"$MESSAGE\"}" \
+      ${{ secrets.SLACK_WEBHOOK_URL }}

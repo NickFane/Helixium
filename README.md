@@ -2,6 +2,8 @@
 
 Configurable UI Journeys
 
+[![Build and Deploy Application](https://github.com/NickFane/Helixium/actions/workflows/build-and-deploy-application.yml/badge.svg)](https://github.com/NickFane/Helixium/actions/workflows/build-and-deploy-application.yml)[![Build and Deploy Terraform Infrastructure](https://github.com/NickFane/Helixium/actions/workflows/build-and-deploy-terraform.yml/badge.svg)](https://github.com/NickFane/Helixium/actions/workflows/build-and-deploy-terraform.yml)
+
 ## Project Structure
 
 - **helixium-web/**: Contains the web/UI application built with React, TypeScript, and Vite. This is the frontend component of the Helixium project.
