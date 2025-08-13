@@ -57,10 +57,12 @@ This directory contains the GitHub Actions workflows for the Helixium project. T
 - Retrieves ECR repository URLs from Terraform outputs
 - Builds and pushes Docker images:
   - Production image (main/master branch)
-  - Development image (all branches)
+  - Development image (main/master branch)
 - Updates ECS task definition with new image
 - Deploys to ECS and waits for stability
 - Provides application URL for testing
+
+**Note:** This workflow only runs on main/master branches. PR validation is handled separately by the `helixium-web-validation.yml` workflow.
 
 **When to use:**
 
@@ -106,6 +108,7 @@ This directory contains the GitHub Actions workflows for the Helixium project. T
 - **Quality Assurance**: Prevents broken builds from reaching main branch
 - **Clear Feedback**: Detailed reporting for PR reviewers
 - **Manual Override**: Can be triggered manually for testing
+- **No ECR Pushes**: PRs do NOT push images to ECR, only validate locally
 
 ## Workflow Dependencies
 

@@ -171,16 +171,8 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push development Docker image (PR)
-        if: github.event_name == 'pull_request'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.dev
-          push: true
-          tags: ${{ needs.setup.outputs.ecr-dev-repo-url }}:pr-${{ github.event.number }}-${{ github.sha }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+      # Note: PR builds should NOT push to ECR - this step has been removed
+      # PR validation is handled by helixium-web-validation.yml workflow
 
   deploy-ecs:
     runs-on: ubuntu-latest
@@ -233,6 +225,8 @@ jobs:
     name: 🔍 Verify Deployment
     needs: [setup, deploy-ecs]
     environment: dev
+    outputs:
+      public-ip: ${{ steps.get-public-ip.outputs.public-ip }}
 
     steps:
       - name: Configure AWS credentials
@@ -243,6 +237,7 @@ jobs:
           aws-region: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
 
       - name: Get deployment URL
+        id: get-public-ip
         run: |
           echo "🔍 Getting deployment URL..."
 
@@ -321,6 +316,7 @@ jobs:
                     echo "🌐 Application deployed successfully!"
                     echo "🔗 Access your application at: http://$PUBLIC_IP"
                     echo "PUBLIC_IP=$PUBLIC_IP" >> $GITHUB_ENV
+                    echo "public-ip=$PUBLIC_IP" >> $GITHUB_OUTPUT
                     return 0
                   else
                     echo "⏳ Public IP not available yet (attempt $attempt/$max_attempts)"
@@ -372,27 +368,75 @@ jobs:
     steps:
       - name: Application Deployment Summary
         run: |
-          echo "🎉 Application build and deployment completed successfully!"
+          echo "📋 Deployment Summary"
+          echo "=================="
           echo ""
-          echo "🐳 Built and Pushed Images:"
-          if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/master" ]; then
-            echo "  • Production: ${{ needs.setup.outputs.ecr-repo-url }}:latest"
-            echo "  • Production: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}"
-            echo "  • Development: ${{ needs.setup.outputs.ecr-dev-repo-url }}:${{ needs.setup.outputs.image-tag }}"
-          elif [ "${{ github.event_name }}" = "pull_request" ]; then
-            echo "  • Development: ${{ needs.setup.outputs.ecr-dev-repo-url }}:pr-${{ github.event.number }}-${{ github.sha }}"
+
+          # Check if setup job completed successfully
+          if [ "${{ needs.setup.result }}" = "success" ]; then
+            echo "✅ Setup job completed successfully"
+            echo ""
+            echo "🐳 Built and Pushed Images:"
+            if [ "${{ github.ref }}" = "refs/heads/main" ] || [ "${{ github.ref }}" = "refs/heads/master" ]; then
+              # Safely check if outputs exist before using them
+              if [ -n "${{ needs.setup.outputs.ecr-repo-url }}" ]; then
+                echo "  • Production: ${{ needs.setup.outputs.ecr-repo-url }}:latest"
+                echo "  • Production: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}"
+              else
+                echo "  • Production: ECR repository URL not available"
+              fi
+              
+              if [ -n "${{ needs.setup.outputs.ecr-dev-repo-url }}" ]; then
+                echo "  • Development: ${{ needs.setup.outputs.ecr-dev-repo-url }}:${{ needs.setup.outputs.image-tag }}"
+              else
+                echo "  • Development: ECR repository URL not available"
+              fi
+            else
+              echo "  • No images pushed (this workflow only runs on main/master branches)"
+            fi
+          else
+            echo "❌ Setup job failed or was skipped"
+            echo "🐳 No images were built or pushed"
           fi
+
           echo ""
-          echo "🚀 Deployed to ECS:"
-          echo "  • Cluster: ${{ env.ECS_CLUSTER }}"
-          echo "  • Service: ${{ env.ECS_SERVICE }}"
-          echo "  • Image: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}"
-          echo ""
-          if [ -n "${{ env.PUBLIC_IP }}" ]; then
-            echo "🌐 Application URL: http://${{ env.PUBLIC_IP }}"
+          echo "🚀 ECS Deployment:"
+          if [ "${{ needs.deploy-ecs.result }}" = "success" ]; then
+            echo "  ✅ Deployment job completed successfully"
+            echo "  • Cluster: ${{ env.ECS_CLUSTER }}"
+            echo "  • Service: ${{ env.ECS_SERVICE }}"
+            if [ -n "${{ needs.setup.outputs.ecr-repo-url }}" ] && [ -n "${{ needs.setup.outputs.image-tag }}" ]; then
+              echo "  • Image: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}"
+            else
+              echo "  • Image: Image information not available"
+            fi
+          else
+            echo "  ❌ Deployment job failed or was skipped"
           fi
+
+          echo ""
+          echo "🔍 Verification:"
+          if [ "${{ needs.verify-deployment.result }}" = "success" ]; then
+            echo "  ✅ Verification job completed successfully"
+            # Check if PUBLIC_IP was set in the verify-deployment job
+            if [ -n "${{ needs.verify-deployment.outputs.public-ip }}" ]; then
+              echo "  🌐 Application URL: http://${{ needs.verify-deployment.outputs.public-ip }}"
+            else
+              echo "  🌐 Application URL: Not available (check ECS console)"
+            fi
+          else
+            echo "  ❌ Verification job failed or was skipped"
+            echo "  🌐 Application URL: Not available (check ECS console)"
+          fi
+
           echo ""
           echo "📝 Next steps:"
-          echo "  1. Test your application at the provided URL"
-          echo "  2. Monitor logs in CloudWatch"
-          echo "  3. Scale your service as needed"
+          if [ "${{ needs.deploy-ecs.result }}" = "success" ]; then
+            echo "  1. Test your application at the provided URL"
+            echo "  2. Monitor logs in CloudWatch"
+            echo "  3. Scale your service as needed"
+          else
+            echo "  1. Check the deployment job logs for errors"
+            echo "  2. Verify infrastructure is properly deployed"
+            echo "  3. Retry the deployment if needed"
+          fi
