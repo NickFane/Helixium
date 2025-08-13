@@ -7,19 +7,21 @@ This document describes the complete CI/CD pipeline for Helixium, including AWS 
 ## Architecture
 
 ```
-┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
-│   GitHub Repo   │───▶│  GitHub Actions │───▶│   AWS ECR       │
-│                 │    │                 │    │                 │
-│ feature/*       │    │ Build & Push    │    │ helixium-web    │
-│ main/master     │    │ Workflow        │    │ helixium-web-dev│
-└─────────────────┘    └─────────────────┘    └─────────────────┘
-                              │
-                              ▼
-                       ┌─────────────────┐
-                       │   Terraform     │
-                       │ Infrastructure  │
-                       │                 │
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│   GitHub Repo   │───▶│  GitHub Actions │───▶│   AWS ECR       │───▶│   AWS ECS       │
+│                 │    │                 │    │                 │    │                 │
+│ feature/*       │    │ Build & Push    │    │ helixium-web    │    │ Fargate Service │
+│ main/master     │    │ Workflow        │    │ helixium-web-dev│    │ Load Balancer   │
+└─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
+                              │                                              │
+                              ▼                                              ▼
+                       ┌─────────────────┐                        ┌─────────────────┐
+                       │   Terraform     │                        │   Public URL    │
+                       │ Infrastructure  │                        │   http://...    │
+                       │                 │                        └─────────────────┘
                        │ • ECR Repos     │
+                       │ • ECS Cluster   │
+                       │ • Load Balancer │
                        │ • IAM Users     │
                        │ • Permissions   │
                        └─────────────────┘
@@ -38,11 +40,27 @@ This document describes the complete CI/CD pipeline for Helixium, including AWS 
 - **`helixium-web`** - Production Docker images
 - **`helixium-web-dev`** - Development Docker images
 
+#### ECS Infrastructure
+
+- **Cluster**: `helixium-cluster` - ECS Fargate cluster
+- **Service**: `helixium-service` - Running application service
+- **Task Definition**: `helixium` - Container configuration
+- **Load Balancer**: `helixium-alb` - Application Load Balancer
+- **Target Group**: `helixium-tg` - Health checks and routing
+
+#### Networking
+
+- **VPC**: `helixium-vpc` - Isolated network environment
+- **Public Subnets**: 2 subnets for load balancer
+- **Private Subnets**: 2 subnets for ECS tasks
+- **Security Groups**: ALB and ECS task security rules
+
 #### IAM Configuration
 
 - **User**: `github-actions-helixium`
 - **Policy**: `helixium-ecr-access`
 - **Permissions**: ECR push/pull operations only
+- **ECS Roles**: Execution and task roles for container permissions
 
 ### Setup Instructions
 
@@ -67,7 +85,9 @@ This document describes the complete CI/CD pipeline for Helixium, including AWS 
 
 ### Configuration Files
 
-- **`main.tf`** - Core infrastructure resources
+- **`main.tf`** - ECR repositories and IAM configuration
+- **`ecs.tf`** - ECS cluster, service, and load balancer
+- **`networking.tf`** - VPC, subnets, and security groups
 - **`variables.tf`** - Variable definitions
 - **`terraform.tfvars.example`** - Configuration template
 - **`setup.sh`** - Automated deployment script
@@ -104,6 +124,31 @@ This document describes the complete CI/CD pipeline for Helixium, including AWS 
 - Login to Amazon ECR
 - Build and push Docker images with conditional logic
 
+### 3. Deploy Infrastructure (`deploy-infrastructure.yml`)
+
+**Trigger**: Changes to Terraform files or manual dispatch
+
+**Environment**: `dev` (GitHub environment with secrets)
+
+**Actions**:
+
+- Plan Terraform changes (all events)
+- Apply Terraform changes (main/master pushes only)
+- Deploy ECS cluster, load balancer, and networking
+
+### 4. Deploy Application (`deploy-application.yml`)
+
+**Trigger**: Changes to application code or manual dispatch with image tag
+
+**Environment**: `dev` (GitHub environment with secrets)
+
+**Actions**:
+
+- Update ECS task definition with new image
+- Deploy to ECS service
+- Wait for service stability
+- Output deployment URL
+
 ## Workflow Logic
 
 ### Pull Request Events
@@ -128,11 +173,11 @@ This document describes the complete CI/CD pipeline for Helixium, including AWS 
 └─────────┬───────┘
           │
           ▼
-┌─────────────────┐    ┌─────────────────┐
-│ Build Prod Image│    │ Build Dev Image │
-│ Tags: latest,   │    │ Tag: {SHA}      │
-│ {SHA}, semver   │    └─────────────────┘
-└─────────────────┘
+┌─────────────────┐    ┌─────────────────┐    ┌─────────────────┐
+│ Build Prod Image│    │ Build Dev Image │    │ Deploy to ECS   │
+│ Tags: latest,   │    │ Tag: {SHA}      │    │ Update Service  │
+│ {SHA}, semver   │    └─────────────────┘    │ Public URL      │
+└─────────────────┘                           └─────────────────┘
 ```
 
 ## Environment Variables

@@ -1,0 +1,94 @@
+name: Deploy Application
+
+on:
+  push:
+    branches: [main, master]
+    paths:
+      - "Dockerfile*"
+      - "helixium-web/**"
+      - ".github/workflows/deploy-application.yml"
+  workflow_dispatch:
+    inputs:
+      image_tag:
+        description: "Docker image tag to deploy (default: latest)"
+        required: false
+        default: "latest"
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION }}
+  ECS_CLUSTER: "helixium-cluster"
+  ECS_SERVICE: "helixium-service"
+  ECS_TASK_DEFINITION: "helixium"
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    name: Deploy to ECS
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION }}
+
+      - name: Set image tag
+        id: set-tag
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.image_tag }}" ]; then
+            echo "tag=${{ github.event.inputs.image_tag }}" >> $GITHUB_OUTPUT
+          else
+            echo "tag=${{ github.sha }}" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Download task definition
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_TASK_DEFINITION }} \
+            --query taskDefinition > task-definition.json
+
+      - name: Update task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v2
+        with:
+          task-definition: task-definition.json
+          container-name: helixium-web
+          image: ${{ vars.ECR_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}
+
+      - name: Deploy to Amazon ECS
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Get deployment URL
+        run: |
+          # Wait for the service to be stable
+          aws ecs wait services-stable \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_SERVICE }}
+
+          # Get the task ARN
+          TASK_ARN=$(aws ecs list-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --service-name ${{ env.ECS_SERVICE }} \
+            --query 'taskArns[0]' \
+            --output text)
+
+          # Get the public IP
+          PUBLIC_IP=$(aws ecs describe-tasks \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --tasks $TASK_ARN \
+            --query 'tasks[0].attachments[0].details[?name==`publicIp`].value' \
+            --output text)
+
+          echo "Deployment URL: http://$PUBLIC_IP"
+          echo "Deployed image: ${{ vars.ECR_REPOSITORY_URL }}:${{ steps.set-tag.outputs.tag }}"
+          echo "Note: The IP may change when the task is restarted"
