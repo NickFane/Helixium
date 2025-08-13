@@ -81,7 +81,7 @@ resource "aws_ecs_service" "helixium" {
   network_configuration {
     subnets          = aws_subnet.public[*].id
     security_groups  = [aws_security_group.ecs.id]
-    assign_public_ip = false # No longer needed with ALB
+    assign_public_ip = true # Needed for ECR access
   }
 
   load_balancer {
