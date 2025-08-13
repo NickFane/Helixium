@@ -9,23 +9,27 @@ interface NavLinkProps {
 
 const NavLink = ({ children, to }: NavLinkProps) => (
   <Link to={to}>
-    <Box
-      as="span"
-      px={2}
-      py={1}
-      borderRadius="md"
-      color="gray.200"
-      cursor="pointer"
-      _hover={{
-        bg: "gray.700",
-        color: "white",
-      }}
-      _active={{
-        bg: "gray.600",
-      }}
-    >
-      {children}
-    </Box>
+    {({ isActive }) => (
+      <Box
+        as="span"
+        px={2}
+        py={1}
+        borderRadius="md"
+        color={isActive ? "white" : "gray.200"}
+        cursor="pointer"
+        bg={isActive ? "gray.600" : "transparent"}
+        aria-current={isActive ? "page" : undefined}
+        _hover={{
+          bg: isActive ? "gray.600" : "gray.700",
+          color: "white",
+        }}
+        _active={{
+          bg: "gray.600",
+        }}
+      >
+        {children}
+      </Box>
+    )}
   </Link>
 );
 
