@@ -248,6 +248,11 @@ This document describes the complete CI/CD pipeline for Helixium, including AWS 
    - Verify file paths in trigger configuration
    - Ensure workflow file is in correct location
 
+4. **Health Check Failures**
+   - The application includes a `/health` endpoint in nginx.conf
+   - Health checks use `localhost/health` within the container
+   - Ensure nginx is running and responding on port 80
+
 ### Debug Steps
 
 1. **Check Environment Variables**
