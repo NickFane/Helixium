@@ -147,6 +147,14 @@ jobs:
           echo "ECS_CLUSTER_NAME=$(terraform output -raw ecs_cluster_name)" >> $GITHUB_ENV
           echo "ECS_SERVICE_NAME=$(terraform output -raw ecs_service_name)" >> $GITHUB_ENV
 
+      # Step 3.5: Set Workflow Outputs
+      - name: Set Workflow Outputs
+        run: |
+          echo "ecr-repository-url=${{ env.ECR_REPOSITORY_URL }}" >> $GITHUB_OUTPUT
+          echo "ecr-dev-repository-url=${{ env.ECR_DEV_REPOSITORY_URL }}" >> $GITHUB_OUTPUT
+          echo "ecs-cluster-name=${{ env.ECS_CLUSTER_NAME }}" >> $GITHUB_OUTPUT
+          echo "ecs-service-name=${{ env.ECS_SERVICE_NAME }}" >> $GITHUB_OUTPUT
+
       # Step 4: Verify Deployment
       - name: Verify Deployment
         run: |

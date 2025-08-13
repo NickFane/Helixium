@@ -68,8 +68,20 @@ terraform-deploy.yml → build-and-push.yml → deploy-application.yml
 ```
 
 1. **terraform-deploy.yml** creates the infrastructure
+
+   - Creates S3 bucket and DynamoDB table for Terraform state
+   - Creates ECR repositories, ECS cluster, VPC, etc.
+   - Outputs ECR repository URLs and ECS information
+
 2. **build-and-push.yml** builds and pushes Docker images
+
+   - **Triggers automatically** after `terraform-deploy.yml` completes successfully
+   - Uses ECR repository URLs from the terraform outputs
+   - Builds production images for main/master branch
+   - Builds development images for pull requests
+
 3. **deploy-application.yml** deploys the application
+   - Deploys the application to ECS using the built images
 
 ## Environment Variables Required
 
