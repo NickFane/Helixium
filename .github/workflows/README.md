@@ -115,6 +115,28 @@ Infrastructure Deployment (Terraform)
     ECS Service Running
 ```
 
+### Workflow Linking
+
+The application deployment workflow is linked to the infrastructure workflow using the `workflow_run` trigger. This means:
+
+- **When infrastructure changes:** Terraform workflow runs → Application workflow waits and then runs
+- **When only application changes:** Application workflow runs immediately (no waiting)
+- **Manual triggers:** Application workflow can be triggered manually at any time
+
+### Trigger Logic
+
+The application workflow will run when:
+
+1. **Direct push trigger:** Changes to `helixium-web/**`, `Dockerfile*`, etc.
+2. **Workflow dependency:** Infrastructure workflow completes successfully
+3. **Manual trigger:** Manual workflow dispatch
+
+The workflow includes a condition to only run when:
+
+- It's a manual trigger, OR
+- It's a direct push trigger, OR
+- It's triggered by a successful infrastructure workflow run
+
 ## Environment Variables
 
 ### Required Secrets

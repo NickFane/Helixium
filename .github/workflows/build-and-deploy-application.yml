@@ -10,6 +10,11 @@ on:
       - "nginx.conf"
       - ".dockerignore"
       - ".github/workflows/build-and-deploy-application.yml"
+  workflow_run:
+    workflows: ["Build and Deploy Terraform Infrastructure"]
+    types:
+      - completed
+    branches: [main, master]
   workflow_dispatch:
     inputs:
       image_tag:
@@ -28,10 +33,23 @@ jobs:
     runs-on: ubuntu-latest
     name: Build and Deploy Application
     environment: dev
+    if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Debug Workflow Trigger
+        run: |
+          echo "🔍 DEBUGGING WORKFLOW TRIGGER:"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Branch: ${{ github.ref_name }}"
+          if [ "${{ github.event_name }}" = "workflow_run" ]; then
+            echo "Triggered by workflow: ${{ github.event.workflow_run.name }}"
+            echo "Workflow conclusion: ${{ github.event.workflow_run.conclusion }}"
+            echo "Workflow run ID: ${{ github.event.workflow_run.id }}"
+          fi
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -54,25 +72,35 @@ jobs:
         run: |
           echo "🔍 Getting ECR repository URLs..."
 
-          # Get ECR repository URLs from Terraform outputs
-          cd terraform
+          # Try to get ECR repository URLs from AWS directly
+          echo "📋 Getting ECR repository URLs from AWS..."
 
-          # Check if terraform is initialized and has state
-          if [ -f "terraform.tfstate" ] || [ -d ".terraform" ]; then
-            echo "📋 Getting Terraform outputs..."
-            ECR_REPO_URL=$(terraform output -raw ecr_repository_url 2>/dev/null || echo "")
-            ECR_DEV_REPO_URL=$(terraform output -raw ecr_dev_repository_url 2>/dev/null || echo "")
-            
-            if [ -n "$ECR_REPO_URL" ] && [ -n "$ECR_DEV_REPO_URL" ]; then
-              echo "ECR_REPOSITORY_URL=$ECR_REPO_URL" >> $GITHUB_ENV
-              echo "ECR_DEV_REPOSITORY_URL=$ECR_DEV_REPO_URL" >> $GITHUB_ENV
-              echo "✅ ECR repository URLs retrieved from Terraform"
-            else
-              echo "❌ Could not get ECR repository URLs from Terraform"
-              exit 1
-            fi
+          # Get production repository URL
+          ECR_REPO_URL=$(aws ecr describe-repositories \
+            --repository-names helixium-web \
+            --query 'repositories[0].repositoryUri' \
+            --output text 2>/dev/null || echo "")
+
+          # Get development repository URL  
+          ECR_DEV_REPO_URL=$(aws ecr describe-repositories \
+            --repository-names helixium-web-dev \
+            --query 'repositories[0].repositoryUri' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$ECR_REPO_URL" ] && [ -n "$ECR_DEV_REPO_URL" ]; then
+            echo "ECR_REPOSITORY_URL=$ECR_REPO_URL" >> $GITHUB_ENV
+            echo "ECR_DEV_REPOSITORY_URL=$ECR_DEV_REPO_URL" >> $GITHUB_ENV
+            echo "✅ ECR repository URLs retrieved from AWS"
+            echo "  Production: $ECR_REPO_URL"
+            echo "  Development: $ECR_DEV_REPO_URL"
           else
-            echo "❌ Terraform state not found. Please run infrastructure deployment first."
+            echo "❌ Could not get ECR repository URLs from AWS"
+            echo "💡 This might mean:"
+            echo "   - Infrastructure hasn't been deployed yet"
+            echo "   - ECR repositories don't exist"
+            echo "   - AWS credentials don't have ECR permissions"
+            echo ""
+            echo "🔧 Please run the infrastructure deployment workflow first"
             exit 1
           fi
 
