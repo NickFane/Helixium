@@ -70,7 +70,7 @@ resource "aws_ecs_task_definition" "helixium" {
   }
 }
 
-# ECS Service (Cost Optimized)
+# ECS Service (Updated to use ALB)
 resource "aws_ecs_service" "helixium" {
   name            = "helixium-service"
   cluster         = aws_ecs_cluster.helixium.id
@@ -81,8 +81,16 @@ resource "aws_ecs_service" "helixium" {
   network_configuration {
     subnets          = aws_subnet.private[*].id
     security_groups  = [aws_security_group.ecs.id]
-    assign_public_ip = true # Enable public IPs for direct access
+    assign_public_ip = false # No longer needed with ALB
   }
+
+  load_balancer {
+    target_group_arn = aws_lb_target_group.helixium.arn
+    container_name   = "helixium-web"
+    container_port   = 80
+  }
+
+  depends_on = [aws_lb_listener.https]
 
   tags = {
     Name    = "helixium-service"

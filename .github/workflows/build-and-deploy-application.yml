@@ -537,14 +537,6 @@ jobs:
                       },
                       "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
                     }
-                    ${{ steps.summary.outputs.deployment-url != 'Not available' && ',{
-                      "type": "button",
-                      "text": {
-                        "type": "plain_text",
-                        "text": "Test Application"
-                      },
-                      "url": "${{ steps.summary.outputs.deployment-url }}"
-                    }' || '' }}
                   ]
                 }
               ]
