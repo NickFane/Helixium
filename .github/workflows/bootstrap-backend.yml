@@ -1,6 +1,9 @@
 name: Bootstrap Terraform Backend
 
 on:
+  push:
+    branches: [main]
+    paths: ["terraform/bootstrap/**"]
   workflow_dispatch: # Manual trigger only
     inputs:
       confirm_bootstrap:
