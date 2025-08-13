@@ -60,8 +60,23 @@ jobs:
             echo "🔒 Creating DynamoDB table for state locking..."
           fi
 
-          # Initialize and apply bootstrap
+          # Initialize bootstrap
           terraform init
+
+          # Import existing resources if they exist but aren't in state
+          echo "🔍 Checking if resources need to be imported..."
+
+          if aws s3api head-bucket --bucket helixium-terraform-state 2>/dev/null; then
+            echo "📦 Importing existing S3 bucket..."
+            terraform import aws_s3_bucket.terraform_state helixium-terraform-state || echo "S3 bucket already in state or import failed"
+          fi
+
+          if aws dynamodb describe-table --table-name helixium-terraform-locks 2>/dev/null; then
+            echo "🔒 Importing existing DynamoDB table..."
+            terraform import aws_dynamodb_table.terraform_locks helixium-terraform-locks || echo "DynamoDB table already in state or import failed"
+          fi
+
+          # Plan and apply bootstrap
           terraform plan -out=tfplan
           terraform apply -auto-approve tfplan
 
