@@ -73,6 +73,7 @@ export default function Navbar() {
             aria-label="Desktop navigation menu"
           >
             <NavLink to="/">Home</NavLink>
+            <NavLink to="/about">About</NavLink>
             <NavLink to="/SampleFormRoute">Sample Form</NavLink>
           </HStack>
         </HStack>
@@ -88,6 +89,7 @@ export default function Navbar() {
         >
           <Stack as={"nav"} gap={4}>
             <NavLink to="/">Home</NavLink>
+            <NavLink to="/about">About</NavLink>
             <NavLink to="/SampleFormRoute">Sample Form</NavLink>
           </Stack>
         </Box>
