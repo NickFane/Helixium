@@ -50,6 +50,17 @@ Complete containerization guide covering:
 - Deployment strategies
 - File structure and overview
 
+### 🚀 [CI/CD Pipeline](ci-cd-pipeline.md)
+
+Comprehensive CI/CD documentation covering:
+
+- AWS infrastructure provisioning with Terraform
+- GitHub Actions workflows and automation
+- ECR repository management and image tagging
+- Security considerations and best practices
+- Troubleshooting and maintenance procedures
+- Future enhancement roadmap
+
 ## Project Structure
 
 ```
@@ -58,7 +69,8 @@ Helixium/
 │   ├── README.md           # This file
 │   ├── project-setup.md    # Setup and configuration guide
 │   ├── development-workflow.md # Development workflow guide
-│   └── docker-implementation.md # Docker containerization guide
+│   ├── docker-implementation.md # Docker containerization guide
+│   └── ci-cd-pipeline.md   # CI/CD pipeline documentation
 ├── helixium-web/            # Web application
 │   ├── src/                # Source code
 │   │   ├── app/            # Core application files
@@ -84,6 +96,10 @@ Helixium/
 ├── DOCKER_README.md        # Docker usage instructions
 ├── .github/                # GitHub configuration
 │   └── workflows/          # CI/CD workflows
+├── terraform/              # Infrastructure as Code
+│   ├── main.tf            # AWS ECR and IAM resources
+│   ├── variables.tf       # Terraform variables
+│   └── setup.sh           # Automated deployment script
 └── README.md               # Project overview
 ```
 
