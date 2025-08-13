@@ -1,15 +1,13 @@
-import { Flex, Separator } from "@chakra-ui/react";
-import { createRootRoute, Link, Outlet } from "@tanstack/react-router";
+import { Flex } from "@chakra-ui/react";
+import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
+import Navbar from "@/features/navbar";
 
 export const Route = createRootRoute({
   component: () => (
-    <Flex direction="column" height="100%" width={"600px"}>
-      <Flex justifyContent={"center"} gap={4}>
-        <Link to="/">Home</Link> <Link to="/SampleFormRoute">Sample Form</Link>
-      </Flex>
-      <Separator size={"md"} width={"100%"} />
-      <Flex flex={1} justifyContent={"center"}>
+    <Flex direction="column" height="100vh" width="100%">
+      <Navbar />
+      <Flex flex={1} justifyContent="center" alignItems="center" p={4} pt={20}>
         <Outlet />
       </Flex>
       <TanStackRouterDevtools />
