@@ -1,0 +1,295 @@
+---
+alwaysApply: true
+---
+
+# Git Branching Workflow and Main Branch Protection
+
+## CRITICAL: Never Commit Directly to Main Branch
+
+### Pre-Commit Branch Verification Protocol
+
+#### Before ANY `git commit` Command
+
+**STEP 1: Check Current Branch**
+```bash
+git branch --show-current
+# Should NOT show 'main' or 'master'
+```
+
+**STEP 2: If on Main Branch - Create Feature Branch**
+```bash
+# Create and switch to new feature branch
+git checkout -b feature/descriptive-name
+
+# Examples of good branch names:
+# feature/playwright-testing
+# feature/user-authentication
+# feature/dashboard-ui
+# feature/api-integration
+# feature/bug-fix-navigation
+```
+
+**STEP 3: Verify Branch Switch**
+```bash
+git branch --show-current
+# Should now show your new feature branch
+```
+
+**STEP 4: Proceed with Commit**
+```bash
+git add .
+git commit -m "descriptive commit message"
+```
+
+### Branch Naming Convention
+
+#### Format: `feature/{description}`
+
+**Good Examples:**
+- `feature/playwright-e2e-testing`
+- `feature/user-registration-form`
+- `feature/docker-optimization`
+- `feature/ci-cd-improvements`
+- `feature/debug-panel-enhancement`
+
+**Bad Examples:**
+- `my-changes` (no feature prefix)
+- `feature/fix` (not descriptive)
+- `update` (no context)
+- `feature/temp` (temporary naming)
+
+#### Description Guidelines:
+- **Use kebab-case** (lowercase with hyphens)
+- **Be descriptive** (3-5 words that explain the change)
+- **Include feature type** when relevant (ui, api, bug-fix, etc.)
+- **Avoid abbreviations** unless commonly understood
+
+### Main Branch Protection Workflow
+
+#### Scenario 1: Already on Feature Branch
+```bash
+# Check current branch
+git branch --show-current
+# Output: feature/my-feature
+
+# Safe to commit
+git add .
+git commit -m "implement feature X"
+```
+
+#### Scenario 2: On Main Branch (REQUIRES ACTION)
+```bash
+# Check current branch
+git branch --show-current
+# Output: main
+
+# STOP - Create feature branch first
+git checkout -b feature/new-feature-name
+
+# Now safe to commit
+git add .
+git commit -m "implement feature X"
+```
+
+#### Scenario 3: Unsure of Current Branch
+```bash
+# Always check first
+git status
+git branch --show-current
+
+# If on main, create feature branch
+# If on feature branch, proceed with commit
+```
+
+### Push and Pull Request Analysis
+
+#### After Pushing Feature Branch
+
+**STEP 1: Push Feature Branch**
+```bash
+git push -u origin feature/branch-name
+```
+
+**STEP 2: Analyze if PR is Needed**
+
+**CREATE PULL REQUEST IF:**
+- ✅ **New features** implemented
+- ✅ **Bug fixes** completed
+- ✅ **Significant changes** to codebase
+- ✅ **Documentation updates** (major)
+- ✅ **CI/CD modifications**
+- ✅ **Configuration changes**
+- ✅ **Dependency updates**
+- ✅ **Multiple commits** with related changes
+
+**SKIP PULL REQUEST ONLY IF:**
+- ❌ **Experimental/WIP** commits (use draft PR instead)
+- ❌ **Personal testing** (should be in separate repo)
+- ❌ **Typo fixes** in non-critical docs (minor)
+
+#### Pull Request Creation Command
+```bash
+# Use GitHub CLI if available
+gh pr create --title "Feature: Description" --body "Detailed description"
+
+# Or use GitHub MCP
+# mcp_GitHub_create_pull_request with appropriate parameters
+```
+
+### Error Prevention Checklist
+
+#### Before Every Commit
+
+- [ ] **Branch Check**: Run `git branch --show-current`
+- [ ] **Not on Main**: Verify not on 'main' or 'master'
+- [ ] **Feature Branch**: Create if needed with `feature/` prefix
+- [ ] **Descriptive Name**: Branch name explains the changes
+- [ ] **Repository Root**: At Helixium directory (per git-repository-navigation rule)
+
+#### Red Flags That Require Action
+
+- Current branch shows `main` or `master`
+- About to commit without checking branch
+- Branch name doesn't follow convention
+- Multiple unrelated changes in same branch
+
+### Branch Management Best Practices
+
+#### Creating Meaningful Branches
+```bash
+# For new features
+git checkout -b feature/user-dashboard
+
+# For bug fixes
+git checkout -b feature/fix-login-validation
+
+# For improvements
+git checkout -b feature/optimize-build-process
+
+# For documentation
+git checkout -b feature/update-api-docs
+```
+
+#### Keeping Branches Clean
+```bash
+# Before starting new work, sync with main
+git checkout main
+git pull origin main
+git checkout -b feature/new-feature
+
+# Regular commits with clear messages
+git commit -m "add user authentication service"
+git commit -m "implement login form validation"
+git commit -m "add user session management"
+```
+
+### Integration with Development Workflow
+
+#### Feature Development Cycle
+
+1. **Start**: Create feature branch from main
+2. **Develop**: Make commits on feature branch
+3. **Test**: Ensure all tests pass (use Playwright E2E testing)
+4. **Push**: Push feature branch to origin
+5. **Review**: Create pull request for code review
+6. **Merge**: Merge to main after approval
+7. **Cleanup**: Delete feature branch after merge
+
+#### Working with Multiple Features
+```bash
+# Feature 1
+git checkout -b feature/user-auth
+# ... work and commit ...
+git push -u origin feature/user-auth
+
+# Feature 2 (start from main)
+git checkout main
+git pull origin main
+git checkout -b feature/dashboard-ui
+# ... work and commit ...
+```
+
+### Emergency Procedures
+
+#### If You Accidentally Commit to Main
+
+**STOP - Do Not Push!**
+
+```bash
+# Move commits to new feature branch
+git checkout -b feature/emergency-branch
+
+# Reset main to previous state
+git checkout main
+git reset --hard HEAD~n  # where n is number of commits to undo
+
+# Push feature branch
+git checkout feature/emergency-branch
+git push -u origin feature/emergency-branch
+```
+
+#### If You Pushed to Main Already
+
+1. **Immediately notify team** of accidental push
+2. **Create hotfix branch** from current main
+3. **Revert main** if possible: `git revert HEAD`
+4. **Create proper PR** for the changes
+
+### Common Scenarios and Actions
+
+| Scenario | Current Branch | Action Required |
+|----------|----------------|-----------------|
+| New feature | `main` | Create `feature/new-feature` |
+| Bug fix | `main` | Create `feature/fix-bug-name` |
+| Continuing work | `feature/existing` | Continue on existing branch |
+| Documentation | `main` | Create `feature/update-docs` |
+| Experimentation | `main` | Create `feature/experiment-name` |
+
+### Integration with PR Workflow
+
+#### Automatic PR Creation Triggers
+
+**Always create PR for:**
+- Frontend changes (`helixium-web/` modifications)
+- CI/CD updates (`.github/workflows/` changes)
+- Infrastructure changes (`terraform/` modifications)
+- Documentation updates (`docs/` changes)
+- Configuration changes (Docker, package.json, etc.)
+
+#### PR Template Considerations
+```markdown
+## Changes
+- [ ] New feature implementation
+- [ ] Bug fix
+- [ ] Documentation update
+- [ ] CI/CD improvement
+
+## Testing
+- [ ] E2E tests pass (`yarn test:e2e`)
+- [ ] Manual testing completed
+- [ ] No breaking changes
+
+## Deployment
+- [ ] Ready for merge to main
+- [ ] Requires infrastructure changes
+```
+
+### Rule Enforcement Summary
+
+**This Rule Prevents:**
+- Direct commits to main branch
+- Unreviewed code reaching production
+- Poor branch naming conventions
+- Unclear feature development workflow
+- Missing pull request creation
+
+**This Rule Ensures:**
+- Proper code review process
+- Clear feature development tracking
+- Consistent branching strategy
+- Quality control through PR workflow
+- Team collaboration and visibility
+
+## Remember
+
+**Main branch is sacred - all changes must go through feature branches and pull request review process.**
