@@ -3,16 +3,18 @@ import "../app/App.css";
 import { createFileRoute } from "@tanstack/react-router";
 import ClickDashboard from "@/features/clickDashboard";
 import { createStore, Provider } from "jotai";
-
-// Create stores outside component to prevent recreation on re-renders
-const store1 = createStore();
-const store2 = createStore();
+import { useMemo } from "react";
 
 export const Route = createFileRoute("/")({
   component: Index,
 });
 
 function Index() {
+  // Create stores inside component with useMemo to prevent recreation on re-renders
+  // but ensure fresh stores for each route mount to avoid state leakage
+  const store1 = useMemo(() => createStore(), []);
+  const store2 = useMemo(() => createStore(), []);
+
   return (
     <>
       <Flex flexDir={"column"} gap={4} maxW="800px" w="100%">
