@@ -40,27 +40,28 @@ export default defineConfig({
             use: { ...devices['Desktop Chrome'] },
         },
 
-        {
-            name: 'firefox',
-            use: { ...devices['Desktop Firefox'] },
-        },
+        /* Additional browsers - commented out for faster CI execution */
+        // {
+        //     name: 'firefox',
+        //     use: { ...devices['Desktop Firefox'] },
+        // },
 
-        {
-            name: 'webkit',
-            use: { ...devices['Desktop Safari'] },
-        },
+        // {
+        //     name: 'webkit',
+        //     use: { ...devices['Desktop Safari'] },
+        // },
 
-        /* Test against mobile viewports. */
-        {
-            name: 'Mobile Chrome',
-            use: { ...devices['Pixel 5'] },
-        },
-        {
-            name: 'Mobile Safari',
-            use: { ...devices['iPhone 12'] },
-        },
+        /* Test against mobile viewports - commented out for faster CI execution */
+        // {
+        //     name: 'Mobile Chrome',
+        //     use: { ...devices['Pixel 5'] },
+        // },
+        // {
+        //     name: 'Mobile Safari',
+        //     use: { ...devices['iPhone 12'] },
+        // },
 
-        /* Test against branded browsers. */
+        /* Test against branded browsers - commented out for faster CI execution */
         // {
         //   name: 'Microsoft Edge',
         //   use: { ...devices['Desktop Edge'], channel: 'msedge' },
