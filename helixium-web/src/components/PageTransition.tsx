@@ -1,11 +1,11 @@
 import { motion, type Transition } from "framer-motion";
 import { type ReactNode, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
-import DebugContainer from "@/features/debug/index";
+import DebugContainer from "@/features/development-tools";
 import {
   AnimationSpeed,
   type AnimationSpeedType,
-} from "@/features/debug/types.ts";
+} from "@/features/development-tools/types";
 
 interface PageTransitionProps {
   children: ReactNode;
