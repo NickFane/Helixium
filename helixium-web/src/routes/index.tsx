@@ -1,4 +1,4 @@
-import { Center, Flex, Text, Box, Heading, HStack, Image, VStack, Grid, SimpleGrid } from "@chakra-ui/react";
+import { Center, Flex, Text, Box, Heading, HStack, Image, VStack, SimpleGrid } from "@chakra-ui/react";
 import "../app/App.css";
 import { createFileRoute } from "@tanstack/react-router";
 
