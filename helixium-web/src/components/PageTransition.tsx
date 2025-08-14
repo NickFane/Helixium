@@ -5,7 +5,7 @@ import DebugContainer from "@/features/debug/index";
 import {
   AnimationSpeed,
   type AnimationSpeedType,
-} from "@/features/debug/types";
+} from "@/features/debug/types.ts";
 
 interface PageTransitionProps {
   children: ReactNode;
