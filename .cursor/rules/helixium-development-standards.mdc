@@ -1,4 +1,9 @@
-# Helixium Development Rules
+---
+alwaysApply: true
+description: Core development standards and patterns for the Helixium project
+---
+
+# Helixium Development Standards
 
 ## Documentation-First Approach
 
@@ -18,14 +23,14 @@
 
 - Use enum-like constants instead of magic strings (see AnimationSpeed pattern)
 - Implement proper TypeScript types for all new features
-- Follow the type safety patterns established in debug system
+- Follow the type safety patterns established in development-tools system
 - Export types from feature-specific types.ts files
 
-## Debug System Integration
+## Development Tools Integration
 
-- When adding new debug features, follow the AnimationSpeedControl pattern
-- Place new debug components in src/features/debug/components/
-- Use the established type safety patterns for debug controls
+- When adding new development features, follow the AnimationSpeedControl pattern
+- Place new development components in src/features/development-tools/components/
+- Use the established type safety patterns for development controls
 - Integrate with the existing DebugContainer architecture
 
 ## Page Transitions
@@ -80,23 +85,23 @@
 - Maintain the established dark theme and Chakra UI patterns
 - Follow the existing color scheme (blue accents, gray backgrounds)
 - Use consistent spacing and layout patterns from existing components
-- Ensure new components work well with the debug drawer system
+- Ensure new components work well with the development tools drawer system
 
 ## Performance and Optimization
 
 - Consider the impact of new features on bundle size and load times
-- Test page transitions at different animation speeds using the debug panel
+- Test page transitions at different animation speeds using the development panel
 - Ensure new components don't interfere with existing smooth transitions
 - Monitor for potential layout shifts or visual glitches
 
 ## Testing and Validation
 
-- Test new features with the debug panel open to verify smooth operation
+- Test new features with the development panel open to verify smooth operation
 - Validate that new components work correctly with page transitions
 - Ensure type safety by testing with different AnimationSpeed values
-- Verify that new debug components integrate properly with the drawer system
+- Verify that new development components integrate properly with the drawer system
 
-## Before Implementing ANY Feature:
+## Before Implementing ANY Feature
 
 1. Check docs/README.md for project structure and conventions
 2. Review relevant feature documentation (e.g., page-transitions-debug.md)
@@ -104,9 +109,9 @@
 4. Update documentation if adding new patterns or features
 5. Ensure type safety and proper folder organization
 6. Consider potential infrastructure and deployment impacts
-7. Test with existing debug tools and page transitions
+7. Test with existing development tools and page transitions
 
-## When Asked to Implement Something:
+## When Asked to Implement Something
 
 - First, reference existing documentation and patterns
 - Explain how the new feature fits into established architecture
