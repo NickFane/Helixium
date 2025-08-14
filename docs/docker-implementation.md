@@ -132,13 +132,9 @@ FROM base AS deps
 RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
-# Install dependencies based on the preferred package manager
+# Install dependencies using yarn
 COPY helixium-web/package.json helixium-web/yarn.lock* ./
-RUN \
-  if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
-  elif [ -f package-lock.json ]; then npm ci; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+RUN yarn --frozen-lockfile
 
 # Rebuild the source code only when needed
 FROM base AS builder
@@ -147,7 +143,7 @@ COPY --from=deps /app/node_modules ./node_modules
 COPY helixium-web/ .
 
 # Generate route tree and build the application
-RUN npm run build
+RUN yarn build
 
 # Production image, copy all the files and run the app
 FROM nginx:alpine AS runner
@@ -162,7 +158,7 @@ CMD ["nginx", "-g", "daemon off;"]
 ### Key Features
 
 1. **Dependency Caching**: Dependencies are installed in a separate stage and cached
-2. **Multi-package Manager Support**: Automatically detects yarn, npm, or pnpm
+2. **Yarn Package Manager**: Uses yarn exclusively for dependency management
 3. **Build Optimization**: Only rebuilds when source code changes
 4. **Security**: No build tools in final production image
 5. **Size Optimization**: Final image only contains runtime dependencies
@@ -184,11 +180,7 @@ WORKDIR /app
 COPY helixium-web/package.json helixium-web/yarn.lock* ./
 
 # Install dependencies
-RUN \
-  if [ -f yarn.lock ]; then yarn install; \
-  elif [ -f package-lock.json ]; then npm install; \
-  else echo "Lockfile not found." && exit 1; \
-  fi
+RUN yarn install
 
 # Copy source code
 COPY helixium-web/ .
@@ -197,7 +189,7 @@ COPY helixium-web/ .
 EXPOSE 5173
 
 # Start development server with host binding for Docker
-CMD ["npm", "run", "dev", "--", "--host", "0.0.0.0"]
+CMD ["yarn", "dev", "--host", "0.0.0.0"]
 ```
 
 ### Development Features
@@ -258,6 +250,7 @@ location /health {
 ```
 
 This endpoint:
+
 - Returns HTTP 200 with "healthy" message
 - Disables access logging to reduce noise
 - Used by ECS, Docker, and load balancer health checks

@@ -40,6 +40,13 @@
 - Use atoms for state management as established in the codebase
 - Implement proper store isolation for feature-specific state
 
+## Package Management
+
+- Use yarn exclusively for package management (install, add, remove, etc.)
+- Never use npm or other package managers
+- Follow yarn-specific commands and workflows
+- Use yarn.lock for dependency locking
+
 ## CI/CD Considerations
 
 - Ensure new features don't break existing CI/CD pipeline

@@ -8,7 +8,7 @@ RUN apk add --no-cache libc6-compat
 WORKDIR /app
 
 # Install dependencies based on the preferred package manager
-COPY helixium-web/package.json helixium-web/yarn.lock* helixium-web/package-lock.json* helixium-web/pnpm-lock.yaml* ./
+COPY helixium-web/package.json helixium-web/yarn.lock* ./
 RUN \
   if [ -f yarn.lock ]; then yarn --frozen-lockfile; \
   else echo "Lockfile not found." && exit 1; \
