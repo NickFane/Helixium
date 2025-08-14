@@ -94,6 +94,18 @@ Advanced UI features covering:
 - Modular debug component architecture
 - Development tools and utilities
 
+### 🧪 [Playwright E2E Testing](playwright-e2e-testing.md)
+
+Comprehensive end-to-end testing framework covering:
+
+- Playwright setup and configuration
+- Cross-browser testing capabilities (optimized for Chromium)
+- Interactive UI mode for test development and debugging
+- CI/CD integration with automated testing
+- Test structure and best practices
+- Performance optimization and troubleshooting
+- Debugging tools and artifact analysis
+
 ## Project Structure
 
 ```
@@ -105,14 +117,15 @@ Helixium/
 │   ├── docker-implementation.md # Docker containerization guide
 │   ├── ci-cd-pipeline.md   # CI/CD pipeline documentation
 │   ├── domain-setup-guide.md # Custom domain configuration
-│   └── page-transitions-debug.md # Page transitions and debug system
+│   ├── page-transitions-debug.md # Page transitions and debug system
+│   └── playwright-e2e-testing.md # End-to-end testing documentation
 ├── helixium-web/            # Web application
 │   ├── src/                # Source code
 │   │   ├── app/            # Core application files
 │   │   ├── components/     # Reusable UI components
 │   │   │   └── PageTransition.tsx # Page transition wrapper
 │   │   ├── features/       # Feature-based modules
-│   │   │   ├── debug/      # Debug system
+│   │   │   ├── development-tools/ # Development debug system
 │   │   │   │   ├── index.tsx # Main debug container
 │   │   │   │   ├── types.ts # Shared debug types
 │   │   │   │   └── components/
@@ -131,6 +144,11 @@ Helixium/
 │   │   ├── store/          # State management
 │   │   │   └── atoms/      # Jotai atom definitions
 │   │   └── assets/         # Static assets
+│   ├── tests/              # E2E testing suite
+│   │   ├── homepage.spec.ts # Homepage functionality tests
+│   │   ├── development-tools.spec.ts # Debug panel tests
+│   │   └── navigation.spec.ts # Navigation and routing tests
+│   ├── playwright.config.ts # Playwright configuration
 │   └── ...                 # Configuration files
 ├── Dockerfile              # Production multi-stage build
 ├── Dockerfile.dev          # Development build with hot reloading
@@ -138,6 +156,9 @@ Helixium/
 ├── nginx.conf              # Nginx configuration for production
 ├── .dockerignore           # Docker build exclusions
 ├── DOCKER_README.md        # Docker usage instructions
+├── .cursor/                # Cursor IDE configuration
+│   └── rules/              # Cursor development rules
+│       └── playwright-e2e-testing.mdc # E2E testing guidelines
 ├── .github/                # GitHub configuration
 │   └── workflows/          # CI/CD workflows
 │       ├── build-and-deploy-application.yml # Main deployment workflow
@@ -179,7 +200,14 @@ Helixium/
    yarn dev
    ```
 
-4. **Build for production**
+4. **Run E2E tests**
+   ```bash
+   yarn test:e2e
+   # Or with interactive UI
+   yarn test:e2e:ui
+   ```
+
+5. **Build for production**
    ```bash
    yarn build
    ```
@@ -217,7 +245,8 @@ For detailed Docker instructions, see [Docker Implementation](docker-implementat
 
 - **Infrastructure Deployment**: Automated Terraform deployment
 - **Application Deployment**: Docker build and ECS deployment
-- **PR Validation**: Quality gates without ECR pushes
+- **E2E Testing**: Automated Playwright tests in CI/CD
+- **PR Validation**: Quality gates with comprehensive testing
 - **Slack Notifications**: Real-time deployment status updates
 
 ### Security Features
@@ -233,12 +262,14 @@ For detailed Docker instructions, see [Docker Implementation](docker-implementat
 - **Scalable Architecture** - Bulletproof React folder structure
 - **Containerization** - Docker multi-stage builds with Nginx
 - **CI/CD Pipeline** - Automated testing and validation
+- **E2E Testing** - Playwright framework with cross-browser support
 - **Type Safety** - Full TypeScript integration
 - **Code Quality** - ESLint with TypeScript support
 - **Production Ready** - Custom domain with SSL
 - **Monitoring** - Slack notifications and health checks
 - **Smooth Transitions** - Page transitions with Framer Motion
 - **Debug Tools** - Integrated development debug panel
+- **Test Automation** - Comprehensive E2E test suite with CI integration
 
 ## Development Guidelines
 
