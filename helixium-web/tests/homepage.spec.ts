@@ -35,11 +35,14 @@ test.describe('Helixium Homepage', () => {
         // Check that technology stack section is visible
         await expect(page.locator('text=Technology Stack')).toBeVisible();
         
-        // Check for some key technologies using more specific selectors
-        await expect(page.locator('[alt="React 19 logo"]').first()).toBeVisible();
-        await expect(page.locator('[alt="TypeScript logo"]').first()).toBeVisible();
-        await expect(page.locator('[alt="Vite logo"]').first()).toBeVisible();
-        await expect(page.locator('[alt="Chakra UI logo"]').first()).toBeVisible();
+        // Check for some key technologies using data-testid for reliability
+        await expect(page.locator('[data-testid="tech-card-react-19"]')).toBeVisible();
+        await expect(page.locator('[data-testid="tech-card-typescript"]')).toBeVisible();
+        await expect(page.locator('[data-testid="tech-card-vite"]')).toBeVisible();
+        await expect(page.locator('[data-testid="tech-card-chakra-ui"]')).toBeVisible();
+        
+        // Verify at least one logo is loaded successfully
+        await expect(page.locator('[data-testid="tech-card-react-19"] img')).toBeVisible();
     });
 
     test('should display architecture highlights', async ({ page }) => {

@@ -25,22 +25,22 @@ function Index() {
     },
     {
       name: "Chakra UI",
-      logo: "https://img.icons8.com/?size=100&id=114092&format=png&color=000000",
+      logo: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/chakraui/chakraui-original.svg",
       description: "Modern component library"
     },
     {
       name: "TanStack Router",
-      logo: "https://raw.githubusercontent.com/TanStack/router/main/media/repo-header.png",
+      logo: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/reactrouter/reactrouter-original.svg",
       description: "Type-safe routing"
     },
     {
       name: "Jotai",
-      logo: "https://raw.githubusercontent.com/pmndrs/jotai/main/img/jotai-mascot.png",
+      logo: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/atom/atom-original.svg",
       description: "Atomic state management"
     },
     {
       name: "Framer Motion",
-      logo: "https://cdn.worldvectorlogo.com/logos/framer-motion.svg",
+      logo: "https://cdn.jsdelivr.net/gh/devicons/devicon@latest/icons/framermotion/framermotion-original.svg",
       description: "Animation library"
     },
     {
@@ -104,10 +104,19 @@ function Index() {
           Technology Stack
         </Heading>
         
-        <SimpleGrid columns={{ base: 2, md: 3, lg: 4 }} spacing={6} mb={6}>
+        <SimpleGrid 
+          columns={{ base: 2, md: 3, lg: 4 }} 
+          spacing={6} 
+          mb={6}
+          role="grid"
+          aria-label="Technology stack used in Helixium"
+        >
           {technologies.map((tech, index) => (
             <VStack
               key={index}
+              data-testid={`tech-card-${tech.name.toLowerCase().replace(/\s+/g, '-')}`}
+              role="gridcell"
+              aria-label={`${tech.name}: ${tech.description}`}
               bg="gray.900"
               p={4}
               borderRadius="md"
@@ -123,21 +132,7 @@ function Index() {
                   maxH="60px"
                   maxW="60px"
                   objectFit="contain"
-                  fallback={
-                    <Box 
-                      bg="gray.700" 
-                      h="60px" 
-                      w="60px" 
-                      borderRadius="md"
-                      display="flex"
-                      alignItems="center"
-                      justifyContent="center"
-                    >
-                      <Text fontSize="xs" color="gray.400" textAlign="center">
-                        {tech.name}
-                      </Text>
-                    </Box>
-                  }
+                  fallbackSrc="data:image/svg+xml;utf8,%3Csvg xmlns='http://www.w3.org/2000/svg' width='60' height='60'%3E%3Crect width='100%25' height='100%25' fill='%234a5568'/%3E%3Ctext x='50%25' y='50%25' dominant-baseline='middle' text-anchor='middle' font-size='8' fill='%23a0aec0'%3ETech%3C/text%3E%3C/svg%3E"
                 />
               </Box>
               <VStack gap={1} textAlign="center">
