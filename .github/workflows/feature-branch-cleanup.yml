@@ -112,7 +112,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "🧹 Feature Branch Cleanup Completed",
+              "text": "@here 🧹 Feature Branch Cleanup Completed",
               "blocks": [
                 {
                   "type": "header",

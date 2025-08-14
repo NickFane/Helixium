@@ -9,9 +9,9 @@
 
 # Request SSL certificate from AWS Certificate Manager (supports both production and dev subdomains)
 resource "aws_acm_certificate" "helixium" {
-  domain_name       = "${var.subdomain}.${var.domain_name}"
+  domain_name               = "${var.subdomain}.${var.domain_name}"
   subject_alternative_names = ["dev.${var.subdomain}.${var.domain_name}"]
-  validation_method = "DNS"
+  validation_method         = "DNS"
 
   lifecycle {
     create_before_destroy = true
