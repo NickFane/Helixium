@@ -55,17 +55,6 @@ jobs:
         run: yarn playwright install --with-deps
         working-directory: ./helixium-web
 
-      - name: Start development server
-        run: yarn dev &
-        working-directory: ./helixium-web
-
-      - name: Wait for server to be ready
-        run: |
-          echo "⏳ Waiting for development server to start..."
-          timeout 60 bash -c 'until curl -f http://localhost:5173 > /dev/null 2>&1; do sleep 2; done'
-          echo "✅ Development server is ready"
-        working-directory: ./helixium-web
-
       - name: Run Playwright tests
         run: yarn test:e2e
         working-directory: ./helixium-web
