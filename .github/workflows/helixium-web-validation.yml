@@ -33,6 +33,10 @@ jobs:
         run: yarn install --frozen-lockfile
         working-directory: ./helixium-web
 
+      - name: Clean TypeScript build cache
+        run: rm -rf node_modules/.tmp
+        working-directory: ./helixium-web
+
       - name: Run linting
         run: yarn lint
         working-directory: ./helixium-web
