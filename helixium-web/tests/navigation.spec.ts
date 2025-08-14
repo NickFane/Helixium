@@ -6,16 +6,16 @@ test.describe('Navigation and Page Transitions', () => {
         await page.waitForLoadState('networkidle');
 
         // Look for navigation links (adjust based on your actual nav structure)
-        const aboutLink = page.locator('a[href="/about"], button:has-text("About")');
+        const sampleFormLink = page.locator('a[href="/SampleFormRoute"], button:has-text("Sample Form")');
         const homeLink = page.locator('a[href="/"], button:has-text("Home")');
 
-        // Test navigation to About page if it exists
-        if (await aboutLink.isVisible()) {
-            await aboutLink.click();
+        // Test navigation to Sample Form page if it exists
+        if (await sampleFormLink.isVisible()) {
+            await sampleFormLink.click();
             await page.waitForLoadState('networkidle');
 
             // Check URL changed
-            await expect(page).toHaveURL(/\/about/);
+            await expect(page).toHaveURL(/\/SampleFormRoute/);
 
             // Navigate back to home if home link exists
             if (await homeLink.isVisible()) {
@@ -24,6 +24,16 @@ test.describe('Navigation and Page Transitions', () => {
                 await expect(page).toHaveURL(/\//);
             }
         }
+    });
+
+    test('should display about content on homepage', async ({ page }) => {
+        await page.goto('/');
+        await page.waitForLoadState('networkidle');
+
+        // Check that the about content is now on the homepage
+        await expect(page.locator('text=About Helixium')).toBeVisible();
+        await expect(page.locator('text=Technology Stack')).toBeVisible();
+        await expect(page.locator('text=Architecture Highlights')).toBeVisible();
     });
 
     test('should handle page transitions with different animation speeds', async ({ page }) => {
@@ -42,9 +52,9 @@ test.describe('Navigation and Page Transitions', () => {
                 await slowerButton.click();
 
                 // Test navigation with slower animation
-                const aboutLink = page.locator('a[href="/about"], button:has-text("About")');
-                if (await aboutLink.isVisible()) {
-                    await aboutLink.click();
+                const sampleFormLink = page.locator('a[href="/SampleFormRoute"], button:has-text("Sample Form")');
+                if (await sampleFormLink.isVisible()) {
+                    await sampleFormLink.click();
                     await page.waitForLoadState('networkidle');
                 }
             }
