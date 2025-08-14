@@ -3,12 +3,11 @@ import {
   clickCountReducerAtom,
 } from "@/store/atoms/clickCountAtom";
 import { Button, Flex, Text } from "@chakra-ui/react";
-import { useAtom, useStore } from "jotai";
+import { useAtom, useAtomValue } from "jotai";
 
 const ClickDashboard = ({ id }: { id: string }) => {
-  const store = useStore();
   const [, dispatch] = useAtom(clickCountReducerAtom);
-  const clickCountText = store.get(clickCountDisplayAtom);
+  const clickCountText = useAtomValue(clickCountDisplayAtom);
   return (
     <Flex flexDir={"column"} gap={2}>
       <Text>{id}</Text>
