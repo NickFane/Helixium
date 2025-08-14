@@ -4,6 +4,8 @@
 
 This document describes the complete CI/CD pipeline for Helixium, including AWS infrastructure provisioning with Terraform, Docker image building, and automated deployment to Amazon ECR.
 
+> **🌿 NEW**: For feature branch development deployments, see [Feature Branch Dev Deployment](feature-branch-dev-deployment-complete.md) - our latest automated preview environment system.
+
 ## Architecture
 
 ```
