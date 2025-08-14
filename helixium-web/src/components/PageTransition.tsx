@@ -1,7 +1,7 @@
 import { motion, type Transition } from "framer-motion";
 import { type ReactNode, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
-import DebugContainer from "@/features/debug";
+import DebugContainer from "@/features/debug/index";
 import {
   AnimationSpeed,
   type AnimationSpeedType,
