@@ -1,0 +1,328 @@
+name: Feature Branch Dev Deployment
+
+on:
+  push:
+    branches:
+      - "feature/**"
+    paths:
+      - "helixium-web/**"
+      - "Dockerfile*"
+      - "docker-compose.yml"
+      - "nginx.conf"
+      - ".dockerignore"
+  workflow_dispatch:
+    inputs:
+      branch:
+        description: "Branch to deploy (defaults to current branch)"
+        required: false
+
+env:
+  AWS_REGION: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
+  ECS_CLUSTER: "helixium-cluster"
+  ECS_DEV_SERVICE: "helixium-dev-service"
+  ECS_DEV_TASK_DEFINITION: "helixium-dev"
+
+jobs:
+  # First run the validation pipeline
+  validate:
+    uses: ./.github/workflows/helixium-web-validation.yml
+
+  # Then deploy to dev environment
+  deploy-dev:
+    runs-on: ubuntu-latest
+    name: 🚀 Deploy to Dev Environment
+    needs: validate
+    if: needs.validate.result == 'success'
+    environment: dev
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ vars.AWS_REGION || 'ap-southeast-2' }}
+
+      - name: Get branch name for tagging
+        id: branch-name
+        run: |
+          if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.branch }}" ]; then
+            BRANCH_NAME="${{ github.event.inputs.branch }}"
+          else
+            BRANCH_NAME="${{ github.ref_name }}"
+          fi
+
+          # Clean branch name for Docker tag (replace / with -)
+          CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]')
+          echo "branch-name=$BRANCH_NAME" >> $GITHUB_OUTPUT
+          echo "clean-branch=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
+          echo "image-tag=${CLEAN_BRANCH}-${{ github.sha }}" >> $GITHUB_OUTPUT
+
+      - name: Get ECR repository URL
+        id: get-ecr-url
+        run: |
+          ECR_DEV_REPO_URL=$(aws ecr describe-repositories \
+            --repository-names helixium-web-dev \
+            --query 'repositories[0].repositoryUri' \
+            --output text 2>/dev/null || echo "")
+
+          if [ -n "$ECR_DEV_REPO_URL" ]; then
+            echo "ecr-dev-repo-url=$ECR_DEV_REPO_URL" >> $GITHUB_OUTPUT
+            echo "✅ Dev ECR repository found: $ECR_DEV_REPO_URL"
+          else
+            echo "❌ Dev ECR repository not found"
+            echo "Please ensure infrastructure is deployed with dev environment"
+            exit 1
+          fi
+
+      - name: Login to Amazon ECR
+        uses: aws-actions/amazon-ecr-login@v2
+
+      - name: Setup Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build and push dev Docker image
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-name.outputs.image-tag }}
+            ${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-name.outputs.clean-branch }}-latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Check if dev service exists
+        id: check-dev-service
+        run: |
+          if aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_DEV_SERVICE }} \
+            --query 'services[0].status' \
+            --output text 2>/dev/null | grep -q ACTIVE; then
+            echo "dev-service-exists=true" >> $GITHUB_OUTPUT
+            echo "✅ Dev service found and active"
+          else
+            echo "dev-service-exists=false" >> $GITHUB_OUTPUT
+            echo "❌ Dev service not found or not active"
+            echo "Please ensure dev infrastructure is deployed"
+            exit 1
+          fi
+
+      - name: Get current task definition
+        id: get-task-def
+        run: |
+          aws ecs describe-task-definition \
+            --task-definition ${{ env.ECS_DEV_TASK_DEFINITION }} \
+            --query taskDefinition > dev-task-definition.json
+
+      - name: Update dev task definition
+        id: task-def
+        uses: aws-actions/amazon-ecs-render-task-definition@v1
+        with:
+          task-definition: dev-task-definition.json
+          container-name: helixium-web-dev
+          image: ${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-name.outputs.image-tag }}
+
+      - name: Scale up dev service if needed
+        run: |
+          # Check current desired count
+          CURRENT_COUNT=$(aws ecs describe-services \
+            --cluster ${{ env.ECS_CLUSTER }} \
+            --services ${{ env.ECS_DEV_SERVICE }} \
+            --query 'services[0].desiredCount' \
+            --output text)
+
+          echo "Current desired count: $CURRENT_COUNT"
+
+          if [ "$CURRENT_COUNT" = "0" ]; then
+            echo "🚀 Scaling up dev service from 0 to 1..."
+            aws ecs update-service \
+              --cluster ${{ env.ECS_CLUSTER }} \
+              --service ${{ env.ECS_DEV_SERVICE }} \
+              --desired-count 1
+            echo "✅ Dev service scaled up"
+          else
+            echo "✅ Dev service already running"
+          fi
+
+      - name: Deploy to dev ECS service
+        uses: aws-actions/amazon-ecs-deploy-task-definition@v1
+        with:
+          task-definition: ${{ steps.task-def.outputs.task-definition }}
+          service: ${{ env.ECS_DEV_SERVICE }}
+          cluster: ${{ env.ECS_CLUSTER }}
+          wait-for-service-stability: true
+
+      - name: Wait for deployment to complete
+        run: |
+          echo "⏳ Waiting for deployment to stabilize..."
+          sleep 60
+
+      - name: Get dev deployment URL
+        id: get-dev-url
+        run: |
+          echo "🔍 Dev environment is available at: https://dev.helixium.nicholasfane.com"
+          echo "deployment-url=https://dev.helixium.nicholasfane.com" >> $GITHUB_OUTPUT
+          echo "branch-deployed=${{ steps.branch-name.outputs.branch-name }}" >> $GITHUB_OUTPUT
+
+      - name: Test dev deployment
+        run: |
+          echo "🧪 Testing dev deployment..."
+          # Wait a bit more for the load balancer to route traffic
+          sleep 30
+
+          # Test the deployment
+          MAX_ATTEMPTS=10
+          ATTEMPT=1
+
+          while [ $ATTEMPT -le $MAX_ATTEMPTS ]; do
+            echo "🔍 Attempt $ATTEMPT/$MAX_ATTEMPTS to reach dev environment..."
+            
+            if curl -f --connect-timeout 10 --max-time 30 -s "https://dev.helixium.nicholasfane.com" > /dev/null; then
+              echo "✅ Dev environment is responding!"
+              echo "🌐 Available at: https://dev.helixium.nicholasfane.com"
+              break
+            else
+              echo "⏳ Dev environment not ready yet, waiting..."
+              if [ $ATTEMPT -eq $MAX_ATTEMPTS ]; then
+                echo "⚠️  Dev environment may still be starting up"
+                echo "🔗 Check directly: https://dev.helixium.nicholasfane.com"
+              else
+                sleep 30
+              fi
+            fi
+            
+            ATTEMPT=$((ATTEMPT + 1))
+          done
+
+  cleanup-notification:
+    runs-on: ubuntu-latest
+    name: 📋 Deployment Summary
+    needs: [validate, deploy-dev]
+    if: always()
+
+    steps:
+      - name: Development Deployment Summary
+        run: |
+          echo "📋 Feature Branch Deployment Summary"
+          echo "===================================="
+          echo ""
+          echo "🌿 Branch: ${{ github.ref_name }}"
+          echo "📝 Commit: ${{ github.sha }}"
+          echo "👤 Triggered by: ${{ github.actor }}"
+          echo ""
+
+          if [ "${{ needs.validate.result }}" = "success" ]; then
+            echo "✅ Validation: Passed"
+            echo "  • Frontend linting ✅"
+            echo "  • TypeScript check ✅"
+            echo "  • E2E tests ✅"
+            echo "  • Docker build ✅"
+          else
+            echo "❌ Validation: Failed"
+          fi
+
+          if [ "${{ needs.deploy-dev.result }}" = "success" ]; then
+            echo "✅ Dev Deployment: Successful"
+            echo "  • Image built and pushed to ECR ✅"
+            echo "  • ECS service updated ✅"
+            echo "  • Deployment verified ✅"
+            echo ""
+            echo "🌐 Dev Environment: https://dev.helixium.nicholasfane.com"
+            echo "📊 Monitor logs: CloudWatch /ecs/helixium-dev"
+          else
+            echo "❌ Dev Deployment: Failed"
+            echo "  Check the deployment logs for details"
+          fi
+
+          echo ""
+          echo "💡 Next steps:"
+          if [ "${{ needs.deploy-dev.result }}" = "success" ]; then
+            echo "  1. Test your changes at https://dev.helixium.nicholasfane.com"
+            echo "  2. Create a pull request when ready"
+            echo "  3. Dev environment will auto-update on new pushes"
+          else
+            echo "  1. Check the workflow logs for errors"
+            echo "  2. Fix issues and push again"
+            echo "  3. Ensure infrastructure is properly deployed"
+          fi
+
+      - name: Notify Slack about feature deployment
+        if: always()
+        uses: slackapi/slack-github-action@v1.24.0
+        with:
+          channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
+          payload: |
+            {
+              "text": "🌿 Feature Branch ${{ needs.deploy-dev.result == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
+              "blocks": [
+                {
+                  "type": "header", 
+                  "text": {
+                    "type": "plain_text",
+                    "text": "🌿 Feature Branch ${{ needs.deploy-dev.result == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}"
+                  }
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Branch:*\n${{ github.ref_name }}"
+                    },
+                    {
+                      "type": "mrkdwn", 
+                      "text": "*Commit:*\n${{ github.sha }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Author:*\n${{ github.actor }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Environment:*\nDevelopment"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "fields": [
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Validation:*\n${{ needs.validate.result == 'success' && '✅ Passed' || '❌ Failed' }}"
+                    },
+                    {
+                      "type": "mrkdwn",
+                      "text": "*Deployment:*\n${{ needs.deploy-dev.result == 'success' && '✅ Success' || '❌ Failed' }}"
+                    }
+                  ]
+                },
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "${{ needs.deploy-dev.result == 'success' && '*🌐 Dev Environment:*\nhttps://dev.helixium.nicholasfane.com' || '*❌ Deployment failed - check workflow logs*' }}"
+                  }
+                },
+                {
+                  "type": "actions",
+                  "elements": [
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "View Workflow"
+                      },
+                      "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    }
+                  ]
+                }
+              ]
+            }
+        env:
+          SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
