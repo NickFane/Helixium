@@ -188,7 +188,7 @@ jobs:
   deploy-dev:
     runs-on: ubuntu-latest
     name: 🚀 Deploy to Dev Environment
-    needs: validate
+    needs: validation
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
     environment: dev
 
@@ -348,43 +348,20 @@ jobs:
           echo ""
           echo "🚀 Your feature branch is now live!"
 
-  # ===== NOTIFICATION SUMMARY =====
-  notification:
-    runs-on: ubuntu-latest
-    name: 📋 Workflow Summary
-    needs: [validate, deploy-dev]
-    if: always()
-
-    steps:
-      - name: Workflow Summary
-        run: |
-          echo "📋 Helixium Web Workflow Summary"
-          echo "================================"
-          echo ""
-          echo "🔍 Validation: ${{ needs.validate.result == 'success' && '✅ Passed' || '❌ Failed' }}"
-          if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
-            echo "🚀 Deployment: ${{ needs.deploy-dev.result == 'success' && '✅ Deployed' || '❌ Failed' }}"
-            if [ "${{ needs.deploy-dev.result }}" = "success" ]; then
-              echo ""
-              echo "🌐 Your feature branch is live at:"
-              echo "   https://dev.helixium.nicholasfane.com"
-            fi
-          fi
-
-      - name: Notify Slack
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+      - name: Notify Slack about deployment
+        if: always()
         uses: slackapi/slack-github-action@v1.24.0
         with:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "🌿 Feature Branch ${{ needs.deploy-dev.result == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
+              "text": "🌿 Feature Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "🌿 Feature Branch ${{ needs.deploy-dev.result == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}"
+                    "text": "🌿 Feature Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}"
                   }
                 },
                 {
@@ -398,16 +375,9 @@ jobs:
                 },
                 {
                   "type": "section",
-                  "fields": [
-                    { "type": "mrkdwn", "text": "*Validation:*\n${{ needs.validate.result == 'success' && '✅ Passed' || '❌ Failed' }}" },
-                    { "type": "mrkdwn", "text": "*Deployment:*\n${{ needs.deploy-dev.result == 'success' && '✅ Success' || '❌ Failed' }}" }
-                  ]
-                },
-                {
-                  "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "${{ needs.deploy-dev.result == 'success' && '*🌐 Dev Environment:*\nhttps://dev.helixium.nicholasfane.com' || '*❌ Deployment failed - check workflow logs*' }}"
+                    "text": "${{ job.status == 'success' && '*🌐 Dev Environment:*\nhttps://dev.helixium.nicholasfane.com' || '*❌ Deployment failed - check workflow logs*' }}"
                   }
                 },
                 {
@@ -424,3 +394,29 @@ jobs:
             }
         env:
           SLACK_BOT_TOKEN: ${{ secrets.SLACK_BOT_TOKEN }}
+
+  # ===== VALIDATION SUMMARY =====
+  summary:
+    runs-on: ubuntu-latest
+    name: 📋 Validation Summary
+    needs: [validation]
+    if: always() && (needs.validation.result == 'success' || needs.validation.result == 'failure')
+    
+    steps:
+      - name: Validation Summary
+        run: |
+          echo "📋 Helixium Web Validation Summary"
+          echo "=================================="
+          echo ""
+          echo "🔍 Validation: ${{ needs.validation.result == 'success' && '✅ Passed' || '❌ Failed' }}"
+          echo ""
+          if [ "${{ needs.validation.result }}" = "success" ]; then
+            echo "✅ All checks passed!"
+            if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
+              echo "🚀 Feature branch deployment should be running..."
+            elif [ "${{ github.event_name }}" = "pull_request" ]; then
+              echo "🎯 PR is ready for review and merge"
+            fi
+          else
+            echo "❌ Some checks failed - review the logs above"
+          fi
