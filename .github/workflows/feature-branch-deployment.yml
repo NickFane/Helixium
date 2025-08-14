@@ -241,7 +241,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "🌿 Feature Branch ✅ Deployed to Dev",
+              "text": "@here 🌿 Feature Branch ✅ Deployed to Dev",
               "blocks": [
                 {
                   "type": "header", 
