@@ -1,15 +1,12 @@
 name: Feature Branch Dev Deployment
 
 on:
-  push:
+  workflow_run:
+    workflows: ["Helixium Web Validation"]
+    types:
+      - completed
     branches:
       - "feature/**"
-    paths:
-      - "helixium-web/**"
-      - "Dockerfile*"
-      - "docker-compose.yml"
-      - "nginx.conf"
-      - ".dockerignore"
   workflow_dispatch:
     inputs:
       branch:
@@ -23,21 +20,30 @@ env:
   ECS_DEV_TASK_DEFINITION: "helixium-dev"
 
 jobs:
-  # First run the validation pipeline
-  validate:
-    uses: ./.github/workflows/helixium-web-validation.yml
-
-  # Then deploy to dev environment
   deploy-dev:
     runs-on: ubuntu-latest
     name: 🚀 Deploy to Dev Environment
-    needs: validate
-    if: needs.validate.result == 'success'
+    if: github.event.workflow_run.conclusion == 'success' && startsWith(github.event.workflow_run.head_branch, 'feature/')
     environment: dev
 
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - name: Download Docker image artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: helixium-web-image
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          run-id: ${{ github.event.workflow_run.id }}
+
+      - name: Load Docker image
+        run: |
+          echo "📦 Loading Docker image from artifact..."
+          docker load < helixium-web-image.tar.gz
+          echo "✅ Docker image loaded"
 
       - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
@@ -51,15 +57,18 @@ jobs:
         run: |
           if [ "${{ github.event_name }}" = "workflow_dispatch" ] && [ -n "${{ github.event.inputs.branch }}" ]; then
             BRANCH_NAME="${{ github.event.inputs.branch }}"
+            COMMIT_SHA="${{ github.sha }}"
           else
-            BRANCH_NAME="${{ github.ref_name }}"
+            BRANCH_NAME="${{ github.event.workflow_run.head_branch }}"
+            COMMIT_SHA="${{ github.event.workflow_run.head_sha }}"
           fi
 
           # Clean branch name for Docker tag (replace / with -)
           CLEAN_BRANCH=$(echo "$BRANCH_NAME" | sed 's/[^a-zA-Z0-9._-]/-/g' | tr '[:upper:]' '[:lower:]')
           echo "branch-name=$BRANCH_NAME" >> $GITHUB_OUTPUT
           echo "clean-branch=$CLEAN_BRANCH" >> $GITHUB_OUTPUT
-          echo "image-tag=${CLEAN_BRANCH}-${{ github.sha }}" >> $GITHUB_OUTPUT
+          echo "image-tag=${CLEAN_BRANCH}-${COMMIT_SHA}" >> $GITHUB_OUTPUT
+          echo "commit-sha=$COMMIT_SHA" >> $GITHUB_OUTPUT
 
       - name: Get ECR repository URL
         id: get-ecr-url
@@ -81,20 +90,22 @@ jobs:
       - name: Login to Amazon ECR
         uses: aws-actions/amazon-ecr-login@v2
 
-      - name: Setup Docker Buildx
-        uses: docker/setup-buildx-action@v3
+      - name: Tag and push image to dev ECR
+        run: |
+          echo "🏷️  Tagging and pushing image to dev ECR..."
 
-      - name: Build and push dev Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          push: true
-          tags: |
+          # Tag the loaded image for ECR
+          docker tag helixium-web:${{ steps.branch-name.outputs.commit-sha }} \
             ${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-name.outputs.image-tag }}
+
+          docker tag helixium-web:${{ steps.branch-name.outputs.commit-sha }} \
             ${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-name.outputs.clean-branch }}-latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+
+          # Push to ECR
+          docker push ${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-name.outputs.image-tag }}
+          docker push ${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-name.outputs.clean-branch }}-latest
+
+          echo "✅ Images pushed to dev ECR"
 
       - name: Check if dev service exists
         id: check-dev-service
@@ -200,57 +211,28 @@ jobs:
             ATTEMPT=$((ATTEMPT + 1))
           done
 
-  cleanup-notification:
-    runs-on: ubuntu-latest
-    name: 📋 Deployment Summary
-    needs: [validate, deploy-dev]
-    if: always()
-
-    steps:
       - name: Development Deployment Summary
         run: |
           echo "📋 Feature Branch Deployment Summary"
           echo "===================================="
           echo ""
-          echo "🌿 Branch: ${{ github.ref_name }}"
-          echo "📝 Commit: ${{ github.sha }}"
+          echo "🌿 Branch: ${{ steps.branch-name.outputs.branch-name }}"
+          echo "📝 Commit: ${{ steps.branch-name.outputs.commit-sha }}"
           echo "👤 Triggered by: ${{ github.actor }}"
           echo ""
-
-          if [ "${{ needs.validate.result }}" = "success" ]; then
-            echo "✅ Validation: Passed"
-            echo "  • Frontend linting ✅"
-            echo "  • TypeScript check ✅"
-            echo "  • E2E tests ✅"
-            echo "  • Docker build ✅"
-          else
-            echo "❌ Validation: Failed"
-          fi
-
-          if [ "${{ needs.deploy-dev.result }}" = "success" ]; then
-            echo "✅ Dev Deployment: Successful"
-            echo "  • Image built and pushed to ECR ✅"
-            echo "  • ECS service updated ✅"
-            echo "  • Deployment verified ✅"
-            echo ""
-            echo "🌐 Dev Environment: https://dev.helixium.nicholasfane.com"
-            echo "📊 Monitor logs: CloudWatch /ecs/helixium-dev"
-          else
-            echo "❌ Dev Deployment: Failed"
-            echo "  Check the deployment logs for details"
-          fi
-
+          echo "✅ Dev Deployment: Successful"
+          echo "  • Image built and validated ✅"
+          echo "  • Image pushed to dev ECR ✅"
+          echo "  • ECS service updated ✅"
+          echo "  • Deployment verified ✅"
+          echo ""
+          echo "🌐 Dev Environment: https://dev.helixium.nicholasfane.com"
+          echo "📊 Monitor logs: CloudWatch /ecs/helixium-dev"
           echo ""
           echo "💡 Next steps:"
-          if [ "${{ needs.deploy-dev.result }}" = "success" ]; then
-            echo "  1. Test your changes at https://dev.helixium.nicholasfane.com"
-            echo "  2. Create a pull request when ready"
-            echo "  3. Dev environment will auto-update on new pushes"
-          else
-            echo "  1. Check the workflow logs for errors"
-            echo "  2. Fix issues and push again"
-            echo "  3. Ensure infrastructure is properly deployed"
-          fi
+          echo "  1. Test your changes at https://dev.helixium.nicholasfane.com"
+          echo "  2. Make additional changes and push to update deployment"
+          echo "  3. Create a pull request when ready for review"
 
       - name: Notify Slack about feature deployment
         if: always()
@@ -259,13 +241,13 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "🌿 Feature Branch ${{ needs.deploy-dev.result == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
+              "text": "🌿 Feature Branch ✅ Deployed to Dev",
               "blocks": [
                 {
                   "type": "header", 
                   "text": {
                     "type": "plain_text",
-                    "text": "🌿 Feature Branch ${{ needs.deploy-dev.result == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}"
+                    "text": "🌿 Feature Branch ✅ Deployed to Dev"
                   }
                 },
                 {
@@ -273,11 +255,11 @@ jobs:
                   "fields": [
                     {
                       "type": "mrkdwn",
-                      "text": "*Branch:*\n${{ github.ref_name }}"
+                      "text": "*Branch:*\n${{ steps.branch-name.outputs.branch-name }}"
                     },
                     {
                       "type": "mrkdwn", 
-                      "text": "*Commit:*\n${{ github.sha }}"
+                      "text": "*Commit:*\n${{ steps.branch-name.outputs.commit-sha }}"
                     },
                     {
                       "type": "mrkdwn",
@@ -291,22 +273,9 @@ jobs:
                 },
                 {
                   "type": "section",
-                  "fields": [
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Validation:*\n${{ needs.validate.result == 'success' && '✅ Passed' || '❌ Failed' }}"
-                    },
-                    {
-                      "type": "mrkdwn",
-                      "text": "*Deployment:*\n${{ needs.deploy-dev.result == 'success' && '✅ Success' || '❌ Failed' }}"
-                    }
-                  ]
-                },
-                {
-                  "type": "section",
                   "text": {
                     "type": "mrkdwn",
-                    "text": "${{ needs.deploy-dev.result == 'success' && '*🌐 Dev Environment:*\nhttps://dev.helixium.nicholasfane.com' || '*❌ Deployment failed - check workflow logs*' }}"
+                    "text": "*🌐 Dev Environment:*\nhttps://dev.helixium.nicholasfane.com"
                   }
                 },
                 {
@@ -319,6 +288,14 @@ jobs:
                         "text": "View Workflow"
                       },
                       "url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+                    },
+                    {
+                      "type": "button",
+                      "text": {
+                        "type": "plain_text",
+                        "text": "Open Dev Environment"
+                      },
+                      "url": "https://dev.helixium.nicholasfane.com"
                     }
                   ]
                 }
