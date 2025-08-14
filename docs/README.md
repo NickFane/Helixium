@@ -201,6 +201,7 @@ Helixium/
    ```
 
 4. **Run E2E tests**
+
    ```bash
    yarn test:e2e
    # Or with interactive UI

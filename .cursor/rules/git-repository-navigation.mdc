@@ -1,0 +1,218 @@
+---
+alwaysApply: true
+---
+
+# Git Repository Navigation and Operations
+
+## CRITICAL: Always Navigate to Repository Root for Git Commands
+
+### Repository Root Identification
+- **Repository Root**: The `Helixium` folder (contains `.git` directory)
+- **NEVER navigate past** `Helixium` - this exits the repository entirely
+- **Current Working Directory Awareness**: Always check where you are before Git operations
+
+### Mandatory Git Command Protocol
+
+#### Before ANY Git Operation (add, commit, push, status)
+
+**STEP 1: Navigate to Repository Root**
+```bash
+# If in helixium-web subdirectory
+cd ..
+
+# If in any other subdirectory, navigate to Helixium root
+cd /path/to/Helixium
+```
+
+**STEP 2: Verify Repository Location**
+```bash
+# Confirm you're in the correct directory
+pwd
+# Should show: /Users/[username]/dev/Helixium
+
+# Verify git repository
+git status
+# Should NOT show "fatal: not a git repository"
+```
+
+**STEP 3: Execute Git Commands**
+```bash
+git add .
+git commit -m "message"
+git push
+```
+
+### Common Navigation Scenarios
+
+#### From `helixium-web/` Directory
+```bash
+# CORRECT
+cd ..
+git add .
+git commit -m "message"
+
+# WRONG - misses files outside helixium-web/
+git add .
+git commit -m "message"
+```
+
+#### From Repository Root (`Helixium/`)
+```bash
+# CORRECT - already at root
+git add .
+git commit -m "message"
+
+# WRONG - exits repository
+cd ..
+git add .
+# Results in: fatal: not a git repository
+```
+
+### File Scope Validation
+
+#### Files That Must Be Included in Commits
+
+**Always check for changes in these locations:**
+- `.github/workflows/` - CI/CD pipeline changes
+- `docs/` - Documentation updates
+- `.cursor/rules/` - Cursor rule modifications
+- `helixium-web/` - Frontend application changes
+- `terraform/` - Infrastructure changes
+- Root-level files (Dockerfile, docker-compose.yml, etc.)
+
+#### Pre-Commit Verification
+```bash
+# Check all modified files across entire repository
+git status
+
+# Verify expected files are included
+git add .
+git status
+
+# Should show all intended changes staged for commit
+```
+
+### Error Prevention Checklist
+
+#### Before Every Git Command
+
+- [ ] **Current Directory Check**: Run `pwd` to verify location
+- [ ] **Repository Validation**: Run `git status` to confirm in git repo
+- [ ] **File Scope Review**: Check `git status` shows all expected files
+- [ ] **Navigation Correction**: Use `cd ..` from subdirectories if needed
+
+#### Red Flags That Indicate Wrong Directory
+
+- `fatal: not a git repository` error
+- Missing expected files in `git status`
+- Only seeing files from current subdirectory
+- Path shows directories beyond `Helixium`
+
+### Directory Structure Reference
+
+```
+/Users/[username]/dev/
+└── Helixium/                    ← REPOSITORY ROOT (target for git commands)
+    ├── .git/                    ← Git repository marker
+    ├── .github/
+    ├── docs/
+    ├── .cursor/
+    ├── helixium-web/           ← Subdirectory (navigate UP from here)
+    ├── terraform/
+    └── [other files]
+```
+
+### Common Mistakes to Avoid
+
+#### ❌ Wrong: Committing from Subdirectory
+```bash
+cd helixium-web
+git add .  # Only adds helixium-web files
+git commit -m "update"  # Misses other changes
+```
+
+#### ❌ Wrong: Navigating Past Repository Root
+```bash
+cd ..
+cd ..  # Now outside repository
+git add .  # fatal: not a git repository
+```
+
+#### ✅ Correct: Always from Repository Root
+```bash
+# From any subdirectory
+cd /path/to/Helixium  # Or use relative navigation to reach root
+git status  # Verify in repository
+git add .   # Captures all repository changes
+git commit -m "comprehensive update"
+```
+
+### Automation Commands
+
+#### Quick Navigation to Repository Root
+```bash
+# From helixium-web or any immediate subdirectory
+cd ..
+
+# Alternative: Absolute path (when deeply nested)
+cd /Users/nfane/dev/Helixium
+```
+
+#### Verification Command Sequence
+```bash
+pwd                    # Check current directory
+git status             # Verify repository and see changes
+git add .              # Stage all changes
+git status             # Confirm staging
+git commit -m "msg"    # Commit with message
+```
+
+### Integration with Development Workflow
+
+#### When Making Changes Across Multiple Areas
+1. **Make code changes** in various directories
+2. **Navigate to repository root** (`Helixium/`)
+3. **Review all changes** with `git status`
+4. **Stage everything** with `git add .`
+5. **Commit comprehensively** with descriptive message
+
+#### When Working in Subdirectories
+- **Development work**: Can be done in `helixium-web/` or other subdirs
+- **Git operations**: ALWAYS return to `Helixium/` root first
+- **File verification**: Ensure all intended changes are captured
+
+### Emergency Recovery
+
+#### If You Get "fatal: not a git repository"
+```bash
+# Check current location
+pwd
+
+# Navigate back to repository root
+cd /Users/nfane/dev/Helixium
+
+# Verify repository
+git status
+
+# Proceed with intended git command
+```
+
+### Best Practices Summary
+
+1. **ALWAYS navigate to `Helixium/` before git commands**
+2. **NEVER navigate past the repository root**
+3. **ALWAYS verify location with `pwd` and `git status`**
+4. **ALWAYS review `git status` before and after `git add .`**
+5. **Include comprehensive file scope in commits**
+
+## This Rule Prevents
+
+- Missing files in commits due to wrong directory
+- "fatal: not a git repository" errors
+- Incomplete change staging
+- Repository navigation confusion
+- Wasted tokens due to repeated git command failures
+
+## Remember
+
+**The `Helixium` directory is your Git command center. All roads lead back to Helixium for git operations.**
