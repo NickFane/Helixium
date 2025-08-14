@@ -1,19 +1,11 @@
 name: Helixium Web Validation
 
 on:
-  pull_request:
-    branches: [main, master]
-    paths:
-      - "helixium-web/**"
-      - "Dockerfile*"
-      - "docker-compose.yml"
-      - "nginx.conf"
-      - ".dockerignore"
-      - ".github/workflows/**"
-      - "terraform/**"
   push:
-    branches: 
-      - "feature/**"  # Trigger on pushes to feature branches
+    branches:
+      - "feature/**" # Trigger on pushes to feature branches (includes PR updates)
+      - "main"       # Trigger on pushes to main for production deployment
+      - "master"     # Trigger on pushes to master for production deployment
     paths:
       - "helixium-web/**"
       - "Dockerfile*"
@@ -27,7 +19,7 @@ on:
 jobs:
   validation:
     runs-on: ubuntu-latest
-    name: PR Quality Gate - Validate Frontend & Docker
+    name: 🔍 Validate Frontend & Docker
 
     steps:
       # ===== PART 1: FRONTEND VALIDATION =====
@@ -137,14 +129,14 @@ jobs:
         working-directory: ./
 
       - name: Save Docker image as artifact
-        if: (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature/')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/'))
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
         run: |
           echo "💾 Saving Docker image for deployment..."
           docker save helixium-web:${{ github.sha }} | gzip > helixium-web-image.tar.gz
           echo "✅ Docker image saved as artifact"
 
       - name: Upload Docker image artifact
-        if: (github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature/')) || (github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/'))
+        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
         uses: actions/upload-artifact@v4
         with:
           name: helixium-web-image
@@ -158,7 +150,7 @@ jobs:
           docker rmi helixium-web-dev-test || true
           # Clean up deployment image ONLY after artifact is created for feature branches
           # NOTE: We keep the SHA-tagged image for production deployment (main/master branches)
-          if [ "${{ github.event_name }}" = "pull_request" ] && [[ "${{ github.head_ref }}" == feature/* ]]; then
+          if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
             echo "🗑️  Cleaning up feature branch deployment image (artifact already saved)"
             docker rmi helixium-web:${{ github.sha }} || true
           else
@@ -171,7 +163,7 @@ jobs:
 
       - name: Validation Summary
         run: |
-          echo "🎉 PR Quality Gate - Validation Completed Successfully!"
+          echo "🎉 Validation Completed Successfully!"
           echo ""
           echo "✅ Frontend Validation:"
           echo "  • Dependencies installed"
@@ -192,8 +184,8 @@ jobs:
           echo "  • Nginx configuration valid"
           echo "  • Docker images cleaned up"
           echo ""
-          echo "✅ PR Quality Gate Passed!"
-          echo "🚀 This PR is ready for review and merge"
+          echo "✅ Quality Gate Passed!"
+          echo "🚀 Code is ready for deployment"
 
   # ===== FEATURE BRANCH DEPLOYMENT =====
   deploy-dev:
@@ -435,8 +427,8 @@ jobs:
             echo "✅ All checks passed!"
             if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
               echo "🚀 Feature branch deployment should be running..."
-            elif [ "${{ github.event_name }}" = "pull_request" ]; then
-              echo "🎯 PR is ready for review and merge"
+            elif [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/main || "${{ github.ref }}" == refs/heads/master ]]; then
+              echo "🎯 Production deployment ready"
             fi
           else
             echo "❌ Some checks failed - review the logs above"
