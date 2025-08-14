@@ -1,0 +1,188 @@
+---
+description: Guidelines for running and maintaining Playwright end-to-end tests during development
+---
+
+# Playwright E2E Testing Protocol
+
+## When to Run E2E Tests
+
+### MANDATORY: Run tests after ANY of these changes:
+
+- Frontend component modifications
+- UI/UX changes (styling, layout, interactions)
+- Page routing or navigation updates
+- Development tools panel modifications
+- Animation speed control changes
+- New feature implementations
+- Bug fixes that affect user workflows
+
+### Command to Execute Tests
+
+```bash
+cd helixium-web
+yarn test:e2e
+```
+
+## Test Result Analysis Protocol
+
+### ✅ All Tests Passing
+
+- **Action**: Proceed with implementation
+- **Commit**: Include test results in commit message if significant changes made
+
+### ❌ Test Failures Detected
+
+#### Step 1: Analyze Failure Type
+
+**Legitimate Bug/Regression**:
+
+- Fix the implementation to restore expected functionality
+- Re-run tests to verify fix
+- Do NOT modify tests unless functionality intentionally changed
+
+**Intentional Functionality Change**:
+
+- Update test expectations to match new behavior
+- Ensure new expectations are correct and comprehensive
+- Document the change in commit message
+
+#### Step 2: Common Failure Patterns
+
+**Selector Issues**:
+
+```
+Error: locator.isVisible: Error: strict mode violation
+```
+
+- Fix: Use exact selectors (`getByRole('button', { name: 'Exact Text', exact: true })`)
+- Avoid partial text matches that could match multiple elements
+
+**Timing Issues**:
+
+```
+Error: Timed out waiting for expect(locator).toBeVisible()
+```
+
+- Fix: Add proper wait conditions (`page.waitForLoadState('networkidle')`)
+- Check if elements load asynchronously
+
+**Title/Content Mismatches**:
+
+```
+Expected pattern: /Expected Title/
+Received string: "Actual Title"
+```
+
+- Determine if title should be updated in app or test expectation needs adjustment
+
+#### Step 3: Test Update Guidelines
+
+**When updating tests**, ensure:
+
+- New expectations accurately reflect intended behavior
+- Tests remain meaningful and catch real issues
+- Cross-browser compatibility maintained
+- Mobile responsiveness validated
+
+## Test Categories and Responsibilities
+
+### Homepage Tests (`homepage.spec.ts`)
+
+- Page loading and title verification
+- Basic navigation functionality
+- Core application startup
+
+### Development Tools Tests (`development-tools.spec.ts`)
+
+- Debug panel open/close functionality
+- Animation speed controls
+- Button highlighting and state management
+
+### Navigation Tests (`navigation.spec.ts`)
+
+- Route transitions
+- Page-to-page navigation
+- URL handling
+
+## Debugging Failed Tests
+
+### View Test Results
+
+- Screenshots: `helixium-web/test-results/*/test-failed-*.png`
+- Videos: `helixium-web/test-results/*/video.webm`
+- Error context: `helixium-web/test-results/*/error-context.md`
+
+### Local Debugging Commands
+
+```bash
+# Run tests with UI for visual debugging
+yarn test:e2e:ui
+
+# Run tests in headed mode (visible browser)
+yarn test:e2e:headed
+
+# Debug specific test
+yarn test:e2e:debug --grep "test name"
+```
+
+## CI/CD Integration Notes
+
+- Tests run automatically in PR validation workflow
+- Failure artifacts uploaded for debugging
+- Multiple browser validation (Chromium, Firefox, WebKit, Mobile)
+- Must pass before merge approval
+
+## Best Practices
+
+### Before Implementing Changes
+
+1. Run baseline test suite to ensure starting state is clean
+2. Make implementation changes
+3. Run tests again and analyze differences
+
+### Test Maintenance
+
+- Keep tests focused and atomic
+- Use exact selectors to avoid flaky tests
+- Maintain meaningful assertions that catch real issues
+- Update tests promptly when functionality changes intentionally
+
+### Documentation
+
+- Document any test expectation changes in commit messages
+- Explain reasoning for test updates vs. bug fixes
+- Include test result summary for significant changes
+
+## Example Workflow
+
+```bash
+# 1. Ensure clean baseline
+cd helixium-web
+yarn test:e2e
+
+# 2. Make implementation changes
+# ... edit code ...
+
+# 3. Re-run tests and analyze
+yarn test:e2e
+
+# 4a. If tests fail due to bugs: fix implementation
+# 4b. If tests fail due to intentional changes: update tests
+
+# 5. Verify final state
+yarn test:e2e
+
+# 6. Commit with test results summary
+git add . && git commit -m "feature: implement X
+
+- Updated component behavior for improved UX
+- E2E tests: 30/30 passing after updating expectations
+- Modified test assertions to match new button behavior"
+```
+
+## Critical Reminders
+
+- **NEVER ignore failing tests** - either fix the bug or update the test
+- **Test failures are valuable feedback** - they catch regressions and guide development
+- **Maintain test quality** - poorly written tests are worse than no tests
+- **Document test changes** - future developers need to understand the reasoning
