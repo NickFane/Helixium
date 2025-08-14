@@ -1,0 +1,109 @@
+# Helixium Development Rules
+
+## Documentation-First Approach
+
+- ALWAYS check existing documentation before implementing new features
+- Reference established patterns from docs/ folder when making architectural decisions
+- Follow the folder structure and conventions documented in docs/README.md
+- Update documentation when adding new features or changing architecture
+
+## Code Organization
+
+- Follow the Bulletproof React folder structure as documented
+- Place features in src/features/ with proper subfolder organization
+- Use src/components/ only for truly generic, reusable components
+- Follow the established patterns for each feature type
+
+## Type Safety
+
+- Use enum-like constants instead of magic strings (see AnimationSpeed pattern)
+- Implement proper TypeScript types for all new features
+- Follow the type safety patterns established in debug system
+- Export types from feature-specific types.ts files
+
+## Debug System Integration
+
+- When adding new debug features, follow the AnimationSpeedControl pattern
+- Place new debug components in src/features/debug/components/
+- Use the established type safety patterns for debug controls
+- Integrate with the existing DebugContainer architecture
+
+## Page Transitions
+
+- Follow the established PageTransition patterns for any new transition effects
+- Use the AnimationSpeed constants for configurable transitions
+- Maintain the simple fade approach unless specifically requested otherwise
+
+## State Management
+
+- Follow Jotai patterns documented in jotai-state-management.md
+- Use atoms for state management as established in the codebase
+- Implement proper store isolation for feature-specific state
+
+## CI/CD Considerations
+
+- Ensure new features don't break existing CI/CD pipeline
+- Follow the established workflow patterns in .github/workflows/
+- Consider impact on deployment and testing processes
+
+## Documentation Updates
+
+- Update relevant documentation when adding new features
+- Follow the documentation structure established in docs/
+- Include code examples and usage patterns in documentation
+- Reference existing documentation when explaining new implementations
+
+## Error Handling and Debugging
+
+- When implementing features that might fail, consider ECR connectivity issues we've encountered
+- For networking/connectivity problems, check security groups and public IP assignments
+- When troubleshooting deployments, verify certificate validation status before enabling HTTPS
+- For DNS issues, confirm both certificate validation records AND main A records are configured
+- Always test in both development and production environments when possible
+
+## Infrastructure and Deployment
+
+- When modifying Terraform, consider the impact on existing ECS services and ALB configuration
+- For domain-related changes, ensure ACM certificate validation is complete before enabling HTTPS listeners
+- When updating ECS services, verify security group configurations for ECR access
+- Consider the cost impact of infrastructure changes (ALB ~$16/month, ECS ~$5-10/month)
+
+## UI/UX Consistency
+
+- Maintain the established dark theme and Chakra UI patterns
+- Follow the existing color scheme (blue accents, gray backgrounds)
+- Use consistent spacing and layout patterns from existing components
+- Ensure new components work well with the debug drawer system
+
+## Performance and Optimization
+
+- Consider the impact of new features on bundle size and load times
+- Test page transitions at different animation speeds using the debug panel
+- Ensure new components don't interfere with existing smooth transitions
+- Monitor for potential layout shifts or visual glitches
+
+## Testing and Validation
+
+- Test new features with the debug panel open to verify smooth operation
+- Validate that new components work correctly with page transitions
+- Ensure type safety by testing with different AnimationSpeed values
+- Verify that new debug components integrate properly with the drawer system
+
+## Before Implementing ANY Feature:
+
+1. Check docs/README.md for project structure and conventions
+2. Review relevant feature documentation (e.g., page-transitions-debug.md)
+3. Follow established patterns from similar features
+4. Update documentation if adding new patterns or features
+5. Ensure type safety and proper folder organization
+6. Consider potential infrastructure and deployment impacts
+7. Test with existing debug tools and page transitions
+
+## When Asked to Implement Something:
+
+- First, reference existing documentation and patterns
+- Explain how the new feature fits into established architecture
+- Follow the same patterns used in similar features
+- Suggest documentation updates for new patterns or features
+- Consider potential debugging scenarios and error cases
+- Validate that the implementation maintains existing UI/UX consistency

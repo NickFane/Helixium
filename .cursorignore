@@ -1,0 +1,12 @@
+# Ignore sensitive files from Cursor analysis
+terraform/terraform.tfvars
+.env
+.env.local
+.env.production
+*.key
+*.pem
+secrets/
+node_modules/
+dist/
+build/
+*.log
