@@ -35,11 +35,11 @@ test.describe('Helixium Homepage', () => {
         // Check that technology stack section is visible
         await expect(page.locator('text=Technology Stack')).toBeVisible();
         
-        // Check for some key technologies
-        await expect(page.locator('text=React 19')).toBeVisible();
-        await expect(page.locator('text=TypeScript')).toBeVisible();
-        await expect(page.locator('text=Vite')).toBeVisible();
-        await expect(page.locator('text=Chakra UI')).toBeVisible();
+        // Check for some key technologies using more specific selectors
+        await expect(page.locator('[alt="React 19 logo"]').first()).toBeVisible();
+        await expect(page.locator('[alt="TypeScript logo"]').first()).toBeVisible();
+        await expect(page.locator('[alt="Vite logo"]').first()).toBeVisible();
+        await expect(page.locator('[alt="Chakra UI logo"]').first()).toBeVisible();
     });
 
     test('should display architecture highlights', async ({ page }) => {
