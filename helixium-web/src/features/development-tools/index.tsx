@@ -7,11 +7,13 @@ import { type AnimationSpeed } from "./types";
 interface DebugContainerProps {
   children?: ReactNode;
   onAnimationSpeedChange?: (speed: AnimationSpeed) => void;
+  currentAnimationSpeed?: AnimationSpeed;
 }
 
 export default function DebugContainer({
   children,
   onAnimationSpeedChange,
+  currentAnimationSpeed,
 }: DebugContainerProps) {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -87,7 +89,10 @@ export default function DebugContainer({
                   </Box>
                 </Box>
 
-                <AnimationSpeedControl onSpeedChange={onAnimationSpeedChange} />
+                <AnimationSpeedControl 
+                  onSpeedChange={onAnimationSpeedChange}
+                  speed={currentAnimationSpeed}
+                />
                 {children}
               </VStack>
             </Box>

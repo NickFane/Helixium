@@ -50,7 +50,10 @@ export default function PageTransition({ children }: PageTransitionProps) {
       </motion.div>
 
       {/* Debug Container */}
-      <DebugContainer onAnimationSpeedChange={setAnimationSpeed}>
+      <DebugContainer 
+        onAnimationSpeedChange={setAnimationSpeed}
+        currentAnimationSpeed={animationSpeed}
+      >
         {/* Additional debug components can be added here */}
       </DebugContainer>
     </>
