@@ -4,8 +4,8 @@ on:
   push:
     branches:
       - "feature/**" # Trigger on pushes to feature branches (includes PR updates)
-      - "main"       # Trigger on pushes to main for production deployment
-      - "master"     # Trigger on pushes to master for production deployment
+      - "main" # Trigger on pushes to main for production deployment
+      - "master" # Trigger on pushes to master for production deployment
     paths:
       - "helixium-web/**"
       - "Dockerfile*"
@@ -129,14 +129,14 @@ jobs:
         working-directory: ./
 
       - name: Save Docker image as artifact
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+        if: startsWith(github.ref, 'refs/heads/feature/')
         run: |
           echo "💾 Saving Docker image for deployment..."
           docker save helixium-web:${{ github.sha }} | gzip > helixium-web-image.tar.gz
           echo "✅ Docker image saved as artifact"
 
       - name: Upload Docker image artifact
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+        if: startsWith(github.ref, 'refs/heads/feature/')
         uses: actions/upload-artifact@v4
         with:
           name: helixium-web-image
@@ -150,7 +150,7 @@ jobs:
           docker rmi helixium-web-dev-test || true
           # Clean up deployment image ONLY after artifact is created for feature branches
           # NOTE: We keep the SHA-tagged image for production deployment (main/master branches)
-          if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
+          if [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
             echo "🗑️  Cleaning up feature branch deployment image (artifact already saved)"
             docker rmi helixium-web:${{ github.sha }} || true
           else
@@ -192,7 +192,7 @@ jobs:
     runs-on: ubuntu-latest
     name: 🚀 Deploy to Dev Environment
     needs: validation
-    if: always() && needs.validation.result == 'success' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+    if: needs.validation.result == 'success' && startsWith(github.ref, 'refs/heads/feature/')
     environment: dev
 
     env:
@@ -203,16 +203,6 @@ jobs:
       ECR_DEV_REPO: "helixium-web-dev"
 
     steps:
-      - name: Debug GitHub Context
-        run: |
-          echo "🔍 Debugging deployment trigger conditions:"
-          echo "Event name: ${{ github.event_name }}"
-          echo "Ref: ${{ github.ref }}"
-          echo "Ref name: ${{ github.ref_name }}"
-          echo "Branch: ${{ github.ref_name }}"
-          echo "Starts with feature/: ${{ startsWith(github.ref, 'refs/heads/feature/') }}"
-          echo "Full condition result: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') }}"
-
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -425,9 +415,9 @@ jobs:
           echo ""
           if [ "${{ needs.validation.result }}" = "success" ]; then
             echo "✅ All checks passed!"
-            if [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
+            if [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
               echo "🚀 Feature branch deployment should be running..."
-            elif [ "${{ github.event_name }}" = "push" ] && [[ "${{ github.ref }}" == refs/heads/main || "${{ github.ref }}" == refs/heads/master ]]; then
+            elif [[ "${{ github.ref }}" == refs/heads/main || "${{ github.ref }}" == refs/heads/master ]]; then
               echo "🎯 Production deployment ready"
             fi
           else
