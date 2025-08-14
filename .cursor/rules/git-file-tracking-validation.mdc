@@ -1,0 +1,97 @@
+---
+alwaysApply: true
+description: Mandatory validation that all created files are tracked by Git before committing
+---
+
+# Git File Tracking Validation
+
+## CRITICAL: Always Verify File Tracking
+
+Before any commit or push, you MUST verify that all files you created or referenced are actually tracked by Git.
+
+### Mandatory Steps When Creating New Files
+
+1. **After creating any new files or directories**:
+
+   ```bash
+   git status
+   git ls-files | grep [path-to-new-files]
+   ```
+
+2. **Check if .gitignore is blocking files**:
+
+   ```bash
+   git add [new-files]
+   # If you see "ignored by .gitignore", investigate immediately
+   ```
+
+3. **Verify all imports can be resolved**:
+   - If you import from a new file, confirm that file exists in Git
+   - Don't assume local files will be available in CI/CD
+
+### Common .gitignore Patterns That Can Block Development Files
+
+Be aware of these patterns that might accidentally ignore legitimate source files:
+
+- `[Dd]ebug/` - blocks any directory named "debug"
+- `[Tt]est/` or `[Tt]ests/` - might block test directories
+- `[Bb]uild/` - could block build-related source directories
+- `[Ll]og/` or `[Ll]ogs/` - might block logging-related code
+-
+- `[Bb]in/` - could block binary-related source code
+
+### Red Flags That Indicate Git Tracking Issues
+
+- ❌ Files exist locally but imports fail in CI/CD
+- ❌ "ENOENT: no such file or directory" errors in CI but not locally
+- ❌ Build works locally but fails in fresh Git checkout
+- ❌ New features work in development but break in production
+
+### Validation Checklist Before Any Commit
+
+- [ ] Run `git status` and verify all new files are listed
+- [ ] Run `git ls-files` and confirm new files appear in output
+- [ ] Test build in a clean environment (delete node_modules, reinstall)
+- [ ] If using path aliases, verify all imported files are tracked
+
+### Recovery Steps When Files Are Missing
+
+1. **Check .gitignore conflicts**:
+
+   ```bash
+   git check-ignore [missing-file-path]
+   ```
+
+2. **Force add if legitimately needed**:
+
+   ```bash
+   git add -f [file-path]
+   ```
+
+3. **Consider renaming if conflicting with .gitignore patterns**:
+   - Rename directories to avoid common ignore patterns
+   - Choose names that won't conflict with build tools
+
+## Examples of This Rule in Action
+
+### ❌ Wrong: Assuming files are tracked
+
+```bash
+# Create new feature
+mkdir src/features/debug
+echo "export default ..." > src/features/debug/index.tsx
+git commit -m "add debug feature"  # Files not actually tracked!
+```
+
+### ✅ Right: Verify tracking before commit
+
+```bash
+# Create new feature
+mkdir src/features/development-tools
+echo "export default ..." > src/features/development-tools/index.tsx
+git status  # Check if files appear
+git add src/features/development-tools/
+git commit -m "add development tools feature"
+```
+
+Remember: **CI/CD environments only have access to files that are tracked in Git. Local file existence means nothing if Git doesn't know about the files.**
