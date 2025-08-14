@@ -67,7 +67,7 @@ jobs:
           path: helixium-web/playwright-report/
           retention-days: 30
 
-      # ===== PART 3: DOCKER VALIDATION =====
+      # ===== PART 3: DOCKER VALIDATION & BUILD =====
 
       - name: Setup Docker Buildx
         uses: docker/setup-buildx-action@v3
@@ -116,11 +116,40 @@ jobs:
           docker images --format "table {{.Repository}}\t{{.Tag}}\t{{.Size}}" | grep -E "(helixium-web-test|helixium-web-dev-test)"
         working-directory: ./
 
+      # ===== PART 4: BUILD DEPLOYABLE IMAGE (FOR FEATURE BRANCHES) =====
+
+      - name: Build production Docker image for deployment
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature/')
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: ./Dockerfile
+          load: true
+          tags: helixium-web:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Save Docker image as artifact
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature/')
+        run: |
+          echo "💾 Saving Docker image for deployment..."
+          docker save helixium-web:${{ github.sha }} | gzip > helixium-web-image.tar.gz
+          echo "✅ Docker image saved as artifact"
+
+      - name: Upload Docker image artifact
+        if: github.event_name == 'pull_request' && startsWith(github.head_ref, 'feature/')
+        uses: actions/upload-artifact@v4
+        with:
+          name: helixium-web-image
+          path: helixium-web-image.tar.gz
+          retention-days: 1
+
       - name: Cleanup Docker Images
         run: |
           echo "🧹 Cleaning up test Docker images..."
           docker rmi helixium-web-test || true
           docker rmi helixium-web-dev-test || true
+          docker rmi helixium-web:${{ github.sha }} || true
           echo "✅ Docker images cleaned up"
         working-directory: ./
 
