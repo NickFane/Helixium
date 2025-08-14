@@ -1,0 +1,103 @@
+---
+description: Specialized guidelines for troubleshooting CI/CD pipeline failures and environment-specific issues
+globs: .github/workflows/*,Dockerfile*,docker-compose.yml,**/vite.config.*,**/webpack.config.*,**/tsconfig.*
+---
+
+# CI/CD and Environment-Specific Troubleshooting
+
+## Common CI/CD Failure Patterns
+
+### Build Tool Path Resolution Issues
+
+**Symptoms**: Works locally, fails in CI with module resolution errors
+**Common Causes**:
+
+- Different working directories between local and CI
+- Case sensitivity differences (local macOS vs CI Linux)
+- Different Node.js versions or package manager behavior
+- Build tool plugins not handling absolute vs relative paths consistently
+
+**Investigation Steps**:
+
+1. Compare local vs CI environment (Node version, OS, working directory)
+2. Check if the issue is path resolution or actual missing files
+3. Research the specific build tool's documentation for CI considerations
+4. Look for environment-specific configuration options
+
+### Docker Build Failures
+
+**Symptoms**: Different behavior between development and production builds
+**Common Causes**:
+
+- Different base images or Node versions
+- Missing files in Docker context (check .dockerignore)
+- Different package manager behavior in containers
+- Environment variable differences
+
+### Path Alias Configuration Issues
+
+**Red Flags**:
+
+- Multiple competing path resolution systems (e.g., both manual aliases and tsconfig paths)
+- Relative paths in build tools that assume specific working directories
+- Missing file extensions in import resolution
+
+**Systematic Fix Approach**:
+
+1. **Identify the resolution system**: TypeScript, build tool, or runtime
+2. **Choose ONE authoritative source**: Either tsconfig.json OR build tool config
+3. **Use absolute paths for build tools**: Avoid relative path assumptions
+4. **Test in clean environment**: Clear node_modules, rebuild from scratch
+
+## Environment Difference Checklist
+
+When local works but CI fails:
+
+### Node.js Environment
+
+- [ ] Node version (.nvmrc vs CI configuration)
+- [ ] Package manager version (yarn vs npm)
+- [ ] Package lock file consistency
+- [ ] Environment variables
+
+### File System
+
+- [ ] Case sensitivity (macOS is case-insensitive, Linux is case-sensitive)
+- [ ] File permissions
+- [ ] Working directory assumptions
+- [ ] Symlink handling
+
+### Build Configuration
+
+- [ ] Path resolution configuration
+- [ ] Plugin versions and compatibility
+- [ ] Build cache behavior
+- [ ] TypeScript configuration loading
+
+### Docker-Specific
+
+- [ ] Base image differences
+- [ ] Build context files (.dockerignore)
+- [ ] Multi-stage build cache
+- [ ] User permissions and ownership
+
+## Solution Reliability Assessment
+
+Before implementing fixes, ask:
+
+1. **Does this address the root cause or just symptoms?**
+2. **Will this work across different environments?**
+3. **Are we creating new dependencies or complexity?**
+4. **What happens if this environment changes?**
+5. **Is this documented in the tool's official CI/CD guidance?**
+
+## Post-Fix Validation
+
+After implementing fixes:
+
+- [ ] Test in completely clean environment
+- [ ] Verify the fix addresses the actual error, not just symptoms
+- [ ] Check for any new warnings or issues introduced
+- [ ] Document what was learned for future reference
+
+Remember: **CI/CD issues often reveal assumptions about environment consistency that don't hold in practice.**

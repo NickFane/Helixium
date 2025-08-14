@@ -1,0 +1,74 @@
+---
+alwaysApply: true
+description: Debugging and problem-solving methodology for systematic issue resolution
+---
+
+# Debugging and Problem-Solving Methodology
+
+## Analytical Approach Over Optimism
+
+When proposing fixes or solutions:
+
+### 1. Skeptical Analysis First
+
+- **Don't assume the first solution will work** - especially for environment-specific issues
+- **Question why the issue exists** - understand root causes before applying fixes
+- **Consider environment differences** - local vs CI/CD, different OS, Node versions, etc.
+- **Look for patterns** - if an issue works locally but fails in CI, investigate environmental factors
+
+### 2. Evidence-Based Reasoning
+
+- **Explain WHY a fix should work** - don't just apply changes blindly
+- **Identify what we're testing** - be explicit about what each change attempts to solve
+- **Consider failure scenarios** - what could still go wrong after this fix?
+- **Research similar issues** - use web search for documented solutions before trying random fixes
+
+### 3. Systematic Investigation
+
+When debugging issues like path resolution, build failures, or CI/CD problems:
+
+1. **Isolate the problem**: What exactly is failing? Where? Under what conditions?
+2. **Gather evidence**: Error messages, logs, environment differences
+3. **Research known issues**: Search for similar problems and documented solutions
+4. **Test hypotheses systematically**: One change at a time, measure results
+5. **Document findings**: What worked, what didn't, and why
+
+### 4. Avoid Common Debugging Mistakes
+
+- **Don't repeat failed approaches** - if a path alias fix didn't work the first time, analyze why before trying variations
+- **Don't make multiple changes at once** - makes it impossible to identify what actually fixed the issue
+- **Don't assume local success = CI success** - always consider environment differences
+- **Don't ignore warning signs** - if you're going in circles, step back and research
+
+### 5. Communication Standards
+
+When proposing solutions:
+
+- **State assumptions clearly**: "This should work because..."
+- **Identify risks**: "If this doesn't work, we should investigate..."
+- **Explain the theory**: "The root cause appears to be..."
+- **Set expectations**: "This addresses X but may not solve Y"
+
+### 6. Research Requirements
+
+Before implementing fixes:
+
+- **Search for documented solutions** to similar problems
+- **Check official documentation** for the tools/frameworks involved
+- **Look for environment-specific considerations** (CI/CD, Docker, different OS)
+- **Understand the underlying technology** - don't just copy-paste solutions
+
+## Example Applied to Recent CI/CD Path Resolution Issue
+
+❌ **Wrong approach**: "Let me try adding manual aliases... that didn't work, let me try loose mode... that didn't work, let me try relative paths..."
+
+✅ **Right approach**:
+
+1. "The error shows Rollup can't resolve '@/features/debug' in CI but works locally"
+2. "This suggests an environment difference in path resolution"
+3. "Research shows vite-tsconfig-paths can fail in CI due to working directory differences"
+4. "Solution: Use explicit absolute path resolution with proper \_\_dirname handling for ES modules"
+5. "This should work because it eliminates reliance on runtime TypeScript config resolution"
+6. "If this fails, we should investigate: Node version differences, file system case sensitivity, or Rollup plugin conflicts"
+
+Remember: **Being wrong quickly is better than being wrong slowly.** Research first, implement with understanding, analyze results critically.
