@@ -1,51 +1,58 @@
-import { motion, AnimatePresence, type Transition } from "framer-motion";
-import { type ReactNode } from "react";
+import { motion, type Transition } from "framer-motion";
+import { type ReactNode, useState } from "react";
 import { useLocation } from "@tanstack/react-router";
+import DebugContainer from "@/features/debug";
+import {
+  AnimationSpeed,
+  type AnimationSpeedType,
+} from "@/features/debug/types";
 
 interface PageTransitionProps {
   children: ReactNode;
 }
 
-const pageVariants = {
-  initial: {
-    opacity: 0,
-  },
-  in: {
-    opacity: 1,
-  },
-  out: {
-    opacity: 0,
-  },
-};
+const getTransition = (speed: AnimationSpeedType): Transition => {
+  const durations = {
+    [AnimationSpeed.SLOWER]: 1.5,
+    [AnimationSpeed.SLOW]: 0.8,
+    [AnimationSpeed.NORMAL]: 0.3,
+  };
 
-const pageTransition: Transition = {
-  type: "tween",
-  ease: "easeInOut",
-  duration: 0.25,
+  return {
+    type: "tween",
+    ease: "easeInOut",
+    duration: durations[speed],
+  };
 };
 
 export default function PageTransition({ children }: PageTransitionProps) {
   const location = useLocation();
+  const [animationSpeed, setAnimationSpeed] = useState<AnimationSpeedType>(
+    AnimationSpeed.NORMAL
+  );
+
+  const pageTransition = getTransition(animationSpeed);
 
   return (
-    <AnimatePresence mode="wait" initial={true}>
+    <>
       <motion.div
         key={location.pathname}
-        initial="initial"
-        animate="in"
-        exit="out"
-        variants={pageVariants}
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
         transition={pageTransition}
         style={{
           width: "100%",
           height: "100%",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
         }}
       >
         {children}
       </motion.div>
-    </AnimatePresence>
+
+      {/* Debug Container */}
+      <DebugContainer onAnimationSpeedChange={setAnimationSpeed}>
+        {/* Additional debug components can be added here */}
+      </DebugContainer>
+    </>
   );
 }
