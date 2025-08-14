@@ -20,15 +20,15 @@ const pageVariants = {
 
 const pageTransition: Transition = {
   type: "tween",
-  ease: "anticipate",
-  duration: 0.3,
+  ease: "easeInOut",
+  duration: 0.2,
 };
 
 export default function PageTransition({ children }: PageTransitionProps) {
   const location = useLocation();
 
   return (
-    <AnimatePresence mode="wait">
+    <AnimatePresence mode="wait" initial={false}>
       <motion.div
         key={location.pathname}
         initial="initial"
