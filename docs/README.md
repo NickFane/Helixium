@@ -6,18 +6,31 @@ Welcome to the Helixium project documentation. This documentation provides compr
 
 Helixium is a "Configurable UI Journeys" project built with React, TypeScript, and Vite. The project aims to provide a framework for creating customizable user interface experiences and step-by-step workflows.
 
-## 🚀 Production Deployment
+## 🚀 Deployment Environments
 
+### Production
 **Live Application**: https://helixium.nicholasfane.com
 
-The application is deployed to AWS with:
-
+Production deployment features:
 - ✅ **Custom Domain**: `helixium.nicholasfane.com`
 - ✅ **SSL Certificate**: Auto-managed by AWS Certificate Manager
 - ✅ **Load Balancer**: Application Load Balancer with HTTPS
 - ✅ **Container Orchestration**: ECS Fargate for scalability
 - ✅ **CI/CD Pipeline**: Automated deployments on main branch
 - ✅ **Slack Notifications**: Real-time deployment status updates
+
+### Development (Feature Branch Preview)
+**Live Preview**: https://dev.helixium.nicholasfane.com
+
+Development deployment features:
+- 🌿 **Automatic Deployment**: Every push to `feature/*` branches
+- ⚡ **Fast Pipeline**: 5-8 minute deployment time
+- 💰 **Cost Optimized**: Auto-scales to 0 when not in use
+- 🔄 **Zero-Downtime**: Rolling updates with health checks
+- 📱 **Slack Integration**: `@here` notifications with deployment links
+- 🧹 **Auto-Cleanup**: Resources cleaned up on PR close
+
+**Developer Experience**: Push to feature branch → Live preview in under 10 minutes!
 
 ## Documentation Index
 
@@ -73,6 +86,17 @@ Comprehensive CI/CD documentation covering:
 - Security considerations and best practices
 - Troubleshooting and maintenance procedures
 - Future enhancement roadmap
+
+### 🌿 [Feature Branch Dev Deployment](feature-branch-dev-deployment-complete.md)
+
+Complete guide to our automated development deployment pipeline:
+
+- **Automatic Preview Environments**: Every feature branch gets a live preview
+- **Optimized Workflows**: Single build, artifact-based deployment
+- **Infrastructure as Code**: Complete Terraform definitions
+- **Cost-Efficient**: Auto-scaling and cleanup automation
+- **Developer Experience**: Sub-10-minute deployments
+- **Troubleshooting Guide**: Common issues and solutions
 
 ### 🌐 [Domain Setup Guide](domain-setup-guide.md)
 
