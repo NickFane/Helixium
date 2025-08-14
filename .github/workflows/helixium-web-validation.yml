@@ -189,7 +189,7 @@ jobs:
     runs-on: ubuntu-latest
     name: 🚀 Deploy to Dev Environment
     needs: validation
-    if: github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
+    if: always() && needs.validation.result == 'success' && github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/')
     environment: dev
 
     env:
@@ -200,6 +200,16 @@ jobs:
       ECR_DEV_REPO: "helixium-web-dev"
 
     steps:
+      - name: Debug GitHub Context
+        run: |
+          echo "🔍 Debugging deployment trigger conditions:"
+          echo "Event name: ${{ github.event_name }}"
+          echo "Ref: ${{ github.ref }}"
+          echo "Ref name: ${{ github.ref_name }}"
+          echo "Branch: ${{ github.ref_name }}"
+          echo "Starts with feature/: ${{ startsWith(github.ref, 'refs/heads/feature/') }}"
+          echo "Full condition result: ${{ github.event_name == 'push' && startsWith(github.ref, 'refs/heads/feature/') }}"
+
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -401,7 +411,7 @@ jobs:
     name: 📋 Validation Summary
     needs: [validation]
     if: always() && (needs.validation.result == 'success' || needs.validation.result == 'failure')
-    
+
     steps:
       - name: Validation Summary
         run: |
