@@ -11,6 +11,17 @@ on:
       - ".dockerignore"
       - ".github/workflows/**"
       - "terraform/**"
+  push:
+    branches: 
+      - "feature/**"  # Trigger on pushes to feature branches
+    paths:
+      - "helixium-web/**"
+      - "Dockerfile*"
+      - "docker-compose.yml"
+      - "nginx.conf"
+      - ".dockerignore"
+      - ".github/workflows/**"
+      - "terraform/**"
   workflow_dispatch: # Allow manual triggering for testing
 
 jobs:
