@@ -92,8 +92,6 @@ jobs:
           context: .
           file: ./Dockerfile
           load: true
-          build-args: |
-            VITE_DEPLOYMENT_ENV=dev
           tags: |
             helixium-web-test
             helixium-web:${{ github.sha }}
