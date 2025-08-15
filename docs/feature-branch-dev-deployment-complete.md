@@ -2,12 +2,12 @@
 
 ## Overview
 
-This document details the complete feature branch development deployment pipeline implemented for Helixium. Every push to a `feature/*` branch automatically deploys a preview environment to `https://dev.helixium.nicholasfane.com`.
+This document details the complete feature/cursor branch development deployment pipeline implemented for Helixium. Every push to a `feature/*` or `cursor/*` branch automatically deploys a preview environment to `https://dev.helixium.nicholasfane.com`.
 
 ## 🎯 What We Built
 
 ### Automated Development Pipeline
-- **Trigger**: Any push to `feature/*` branches
+- **Trigger**: Any push to `feature/*` or `cursor/*` branches
 - **Process**: Validation → Build → Deploy → Test → Notify
 - **Result**: Live preview environment within 5-10 minutes
 - **Cost**: Optimized with auto-scaling (0 when not needed)
@@ -50,6 +50,7 @@ on:
   push:
     branches:
       - "feature/**"  # All feature branches
+      - "cursor/**"   # All cursor branches
       - "main"        # Production deployment
       - "master"      # Production deployment
     paths:
@@ -95,7 +96,7 @@ on:
 
 **Deployment Conditions**:
 ```yaml
-if: needs.validation.result == 'success' && startsWith(github.ref, 'refs/heads/feature/')
+if: needs.validation.result == 'success' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/'))
 ```
 
 **Cost Optimization**:
@@ -110,6 +111,8 @@ if: needs.validation.result == 'success' && startsWith(github.ref, 'refs/heads/f
 1. **Create Feature Branch**
    ```bash
    git checkout -b feature/awesome-new-feature
+   # or
+   git checkout -b cursor/awesome-new-feature
    ```
 
 2. **Make Changes & Push**
@@ -117,6 +120,8 @@ if: needs.validation.result == 'success' && startsWith(github.ref, 'refs/heads/f
    git add .
    git commit -m "implement awesome feature"
    git push -u origin feature/awesome-new-feature
+   # or
+   git push -u origin cursor/awesome-new-feature
    ```
 
 3. **Automatic Pipeline**
@@ -203,7 +208,7 @@ if: needs.validation.result == 'success' && startsWith(github.ref, 'refs/heads/f
 
 #### 5. "Deployment was skipped"
 **Cause**: Conditional logic preventing deployment
-**Solution**: Verify branch name matches `feature/*` pattern
+**Solution**: Verify branch name matches `feature/*` or `cursor/*` pattern
 
 ### Debugging Commands
 

@@ -1,10 +1,10 @@
-name: Feature Branch Cleanup
+name: Feature/Cursor Branch Cleanup
 
 on:
   pull_request:
     types: [closed]
     branches: [main, master]
-    # Only trigger for feature branch PRs being closed
+    # Only trigger for feature/cursor branch PRs being closed
     paths:
       - "helixium-web/**"
       - "Dockerfile*"
@@ -24,8 +24,8 @@ jobs:
   cleanup-dev-environment:
     runs-on: ubuntu-latest
     name: 🧹 Cleanup Dev Environment
-    # Only run if it's a feature branch being closed or manual trigger
-    if: (github.event.pull_request.head.ref && startsWith(github.event.pull_request.head.ref, 'feature/')) || github.event_name == 'workflow_dispatch'
+    # Only run if it's a feature/cursor branch being closed or manual trigger
+    if: (github.event.pull_request.head.ref && (startsWith(github.event.pull_request.head.ref, 'feature/') || startsWith(github.event.pull_request.head.ref, 'cursor/'))) || github.event_name == 'workflow_dispatch'
     environment: dev
 
     steps:
@@ -85,7 +85,7 @@ jobs:
 
       - name: Cleanup Summary
         run: |
-          echo "📋 Feature Branch Cleanup Summary"
+          echo "📋 Feature/Cursor Branch Cleanup Summary"
           echo "================================="
           echo ""
           if [ "${{ github.event_name }}" = "pull_request" ]; then
@@ -102,7 +102,7 @@ jobs:
           echo "  • Cost optimization applied"
           echo ""
           echo "💡 Dev environment can be reactivated by:"
-          echo "  • Pushing to any feature/ branch"
+          echo "  • Pushing to any feature/ or cursor/ branch"
           echo "  • Manual workflow dispatch"
 
       - name: Notify Slack about cleanup
@@ -112,13 +112,13 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "@here 🧹 Feature Branch Cleanup Completed",
+              "text": "@here 🧹 Feature/Cursor Branch Cleanup Completed",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text", 
-                    "text": "🧹 Feature Branch Cleanup"
+                    "text": "🧹 Feature/Cursor Branch Cleanup"
                   }
                 },
                 {

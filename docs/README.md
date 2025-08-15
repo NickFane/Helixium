@@ -23,7 +23,7 @@ Production deployment features:
 **Live Preview**: https://dev.helixium.nicholasfane.com
 
 Development deployment features:
-- 🌿 **Automatic Deployment**: Every push to `feature/*` branches
+- 🌿 **Automatic Deployment**: Every push to `feature/*` or `cursor/*` branches
 - ⚡ **Fast Pipeline**: 5-8 minute deployment time
 - 💰 **Cost Optimized**: Auto-scales to 0 when not in use
 - 🔄 **Zero-Downtime**: Rolling updates with health checks
