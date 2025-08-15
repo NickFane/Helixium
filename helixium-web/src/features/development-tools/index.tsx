@@ -18,10 +18,9 @@ export default function DebugContainer({
 }: DebugContainerProps) {
   const [isOpen, setIsOpen] = useState(false);
   
-  // Show debug tools based on environment
-  // In development mode (including tests), always show debug tools
-  // In production, use runtime configuration
-  const showDebugTools = import.meta.env.DEV ? true : shouldShowDebugTools();
+  // Use runtime configuration to determine if debug tools should be shown
+  // This works for both development (Vite dev server) and production (runtime injection)
+  const showDebugTools = shouldShowDebugTools();
   
   // If debug tools should not be shown, return null
   if (!showDebugTools) {
