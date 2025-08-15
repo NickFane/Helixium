@@ -10,6 +10,7 @@ The Docker setup includes:
 - **Development build**: Dockerfile for development with hot reloading
 - **Nginx configuration**: Optimized for serving React SPAs
 - **Docker Compose**: Easy orchestration for both development and production
+- **Runtime environment injection**: Environment variables injected at container startup
 
 ## Quick Start
 
@@ -40,27 +41,24 @@ The Docker setup includes:
 ### Production
 
 ```bash
-# Build the production image (with debug overlay disabled)
-docker build --build-arg VITE_DEPLOYMENT_ENV=prod -t helixium-web .
+# Build the production image (single build for all environments)
+docker build -t helixium-web .
 
-# Build the production image with debug overlay enabled
-docker build --build-arg VITE_DEPLOYMENT_ENV=dev -t helixium-web .
+# Run with debug overlay disabled (production)
+docker run -p 3000:80 -e DEPLOYMENT_ENV=prod helixium-web
 
-# Run the container
-docker run -p 3000:80 helixium-web
-
-# Run in detached mode
-docker run -d -p 3000:80 --name helixium-web helixium-web
+# Run with debug overlay enabled (development)
+docker run -p 3000:80 -e DEPLOYMENT_ENV=dev helixium-web
 ```
 
 ### Development
 
 ```bash
 # Build the development image
-docker build --build-arg VITE_DEPLOYMENT_ENV=dev -f Dockerfile.dev -t helixium-web-dev .
+docker build -f Dockerfile.dev -t helixium-web-dev .
 
 # Run the development container
-docker run -p 5173:5173 -v $(pwd)/helixium-web:/app helixium-web-dev
+docker run -p 5173:5173 -e VITE_RUNTIME_DEPLOYMENT_ENV=dev -v $(pwd)/helixium-web:/app helixium-web-dev
 ```
 
 ## Docker Compose Commands
@@ -92,16 +90,20 @@ docker-compose down && docker-compose up --build
 The application supports the following environment variables:
 
 - `NODE_ENV`: Set to `production` or `development` (affects build optimizations)
-- `VITE_DEPLOYMENT_ENV`: Set to `prod` or `dev` (controls debug overlay visibility)
+- `DEPLOYMENT_ENV`: Set to `prod` or `dev` (controls debug overlay visibility at runtime)
+- `VITE_RUNTIME_DEPLOYMENT_ENV`: Development-only variable for Vite dev server
 - `VITE_API_URL`: API endpoint URL (if applicable)
 
-### Build Arguments
+### Runtime Environment Injection
 
-The Dockerfile accepts the following build arguments:
+**Key Feature**: The same Docker image can be deployed to different environments with different behaviors:
 
-- `VITE_DEPLOYMENT_ENV`: Controls whether debug tools are shown (default: `prod`)
-  - `dev`: Shows debug overlay (TanStack Router Devtools)
-  - `prod`: Hides debug overlay
+- **Production deployment**: Set `DEPLOYMENT_ENV=prod` → Debug overlay hidden
+- **Development deployment**: Set `DEPLOYMENT_ENV=dev` → Debug overlay visible
+
+This is achieved through:
+1. **Production**: Entrypoint script injects environment variables into HTML at container startup
+2. **Development**: Vite dev server reads `VITE_RUNTIME_DEPLOYMENT_ENV` from environment
 
 ### Port Configuration
 

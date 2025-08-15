@@ -5,12 +5,11 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-      args:
-        VITE_DEPLOYMENT_ENV: prod
     ports:
       - "3000:80"
     environment:
       - NODE_ENV=production
+      - DEPLOYMENT_ENV=prod
     restart: unless-stopped
     healthcheck:
       test:
@@ -32,8 +31,6 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-      args:
-        VITE_DEPLOYMENT_ENV: dev
     ports:
       - "5173:5173"
     volumes:
@@ -41,5 +38,6 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - VITE_RUNTIME_DEPLOYMENT_ENV=dev
     profiles:
       - dev

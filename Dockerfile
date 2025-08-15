@@ -20,10 +20,6 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY helixium-web/ .
 
-# Accept build argument for deployment environment
-ARG VITE_DEPLOYMENT_ENV=prod
-ENV VITE_DEPLOYMENT_ENV=$VITE_DEPLOYMENT_ENV
-
 # Generate route tree and build the application
 RUN yarn build
 
@@ -40,8 +36,12 @@ COPY --from=builder /app/dist .
 # Copy nginx configuration
 COPY nginx.conf /etc/nginx/nginx.conf
 
+# Copy entrypoint script
+COPY docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
+
 # Expose port 80
 EXPOSE 80
 
-# Start nginx
-CMD ["nginx", "-g", "daemon off;"]
+# Use entrypoint script to inject runtime environment variables
+ENTRYPOINT ["/docker-entrypoint.sh"]
