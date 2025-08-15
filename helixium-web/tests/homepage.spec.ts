@@ -5,7 +5,7 @@ test.describe('Helixium Homepage', () => {
         await page.goto('/');
 
         // Check that the page loads successfully
-        await expect(page).toHaveTitle(/Vite \+ React \+ TS/);
+        await expect(page).toHaveTitle(/Helixium/);
 
         // Wait for React to render
         await page.waitForLoadState('networkidle');
