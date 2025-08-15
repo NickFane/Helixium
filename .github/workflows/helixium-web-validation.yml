@@ -274,11 +274,19 @@ jobs:
           echo "📋 Getting current dev task definition..."
           aws ecs describe-task-definition --task-definition ${{ env.ECS_DEV_TASK_DEFINITION }} --query taskDefinition > dev-task-definition.json
 
-          echo "🔧 Updating task definition with new image..."
+          echo "🔧 Updating task definition with new image and environment variables..."
           UPDATED_TASK_DEF=$(jq --arg img "${{ steps.get-ecr-url.outputs.ecr-dev-repo-url }}:${{ steps.branch-info.outputs.image-tag }}" \
-            '.containerDefinitions[0].image = $img | del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' \
+            '.containerDefinitions[0].image = $img | 
+             .containerDefinitions[0].environment = [
+               {"name": "NODE_ENV", "value": "development"},
+               {"name": "DEPLOYMENT_ENV", "value": "dev"}
+             ] |
+             del(.taskDefinitionArn, .revision, .status, .requiresAttributes, .placementConstraints, .compatibilities, .registeredAt, .registeredBy)' \
             dev-task-definition.json)
           echo "$UPDATED_TASK_DEF" > updated-dev-task-definition.json
+
+          echo "🔍 Verifying environment variables in updated task definition..."
+          jq '.containerDefinitions[0].environment' updated-dev-task-definition.json
 
           echo "📝 Registering new task definition..."
           NEW_TASK_DEF_ARN=$(aws ecs register-task-definition --cli-input-json file://updated-dev-task-definition.json --query 'taskDefinition.taskDefinitionArn' --output text)
@@ -303,6 +311,24 @@ jobs:
             --task-definition ${{ steps.deploy.outputs.task-definition }} \
             --force-new-deployment
           echo "✅ Service update initiated"
+
+      - name: Verify deployment configuration
+        run: |
+          echo "🔍 Verifying deployment configuration..."
+          
+          echo "📋 Current dev service configuration:"
+          aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_DEV_SERVICE }} \
+            --query 'services[0].{ServiceName:serviceName,TaskDefinition:taskDefinition,DesiredCount:desiredCount,RunningCount:runningCount}' \
+            --output table
+          
+          echo "📝 Current task definition environment variables:"
+          aws ecs describe-task-definition --task-definition ${{ steps.deploy.outputs.task-definition }} \
+            --query 'taskDefinition.containerDefinitions[0].environment' \
+            --output table
+          
+          echo "🎯 Target group health:"
+          aws elbv2 describe-target-health --target-group-arn $(aws elbv2 describe-target-groups --names "helixium-dev-tg" --query 'TargetGroups[0].TargetGroupArn' --output text) \
+            --output table || echo "Could not check target group health"
 
       - name: Wait for service stability
         run: |
