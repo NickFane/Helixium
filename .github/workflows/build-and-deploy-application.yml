@@ -156,6 +156,8 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
+          build-args: |
+            VITE_DEPLOYMENT_ENV=prod
           tags: ${{ needs.setup.outputs.ecr-repo-url }}:latest,${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max
@@ -167,6 +169,8 @@ jobs:
           context: .
           file: ./Dockerfile.dev
           push: true
+          build-args: |
+            VITE_DEPLOYMENT_ENV=dev
           tags: ${{ needs.setup.outputs.ecr-dev-repo-url }}:${{ needs.setup.outputs.image-tag }}
           cache-from: type=gha
           cache-to: type=gha,mode=max

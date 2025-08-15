@@ -20,6 +20,10 @@ WORKDIR /app
 COPY --from=deps /app/node_modules ./node_modules
 COPY helixium-web/ .
 
+# Accept build argument for deployment environment
+ARG VITE_DEPLOYMENT_ENV=prod
+ENV VITE_DEPLOYMENT_ENV=$VITE_DEPLOYMENT_ENV
+
 # Generate route tree and build the application
 RUN yarn build
 

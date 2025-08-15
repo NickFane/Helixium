@@ -55,6 +55,10 @@ resource "aws_ecs_task_definition" "helixium_dev" {
         {
           name  = "NODE_ENV"
           value = "development"
+        },
+        {
+          name  = "VITE_DEPLOYMENT_ENV"
+          value = "dev"
         }
       ]
 

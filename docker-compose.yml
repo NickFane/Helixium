@@ -5,6 +5,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
+      args:
+        VITE_DEPLOYMENT_ENV: prod
     ports:
       - "3000:80"
     environment:
@@ -30,6 +32,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
+      args:
+        VITE_DEPLOYMENT_ENV: dev
     ports:
       - "5173:5173"
     volumes:

@@ -40,8 +40,11 @@ The Docker setup includes:
 ### Production
 
 ```bash
-# Build the production image
-docker build -t helixium-web .
+# Build the production image (with debug overlay disabled)
+docker build --build-arg VITE_DEPLOYMENT_ENV=prod -t helixium-web .
+
+# Build the production image with debug overlay enabled
+docker build --build-arg VITE_DEPLOYMENT_ENV=dev -t helixium-web .
 
 # Run the container
 docker run -p 3000:80 helixium-web
@@ -54,7 +57,7 @@ docker run -d -p 3000:80 --name helixium-web helixium-web
 
 ```bash
 # Build the development image
-docker build -f Dockerfile.dev -t helixium-web-dev .
+docker build --build-arg VITE_DEPLOYMENT_ENV=dev -f Dockerfile.dev -t helixium-web-dev .
 
 # Run the development container
 docker run -p 5173:5173 -v $(pwd)/helixium-web:/app helixium-web-dev
@@ -88,8 +91,17 @@ docker-compose down && docker-compose up --build
 
 The application supports the following environment variables:
 
-- `NODE_ENV`: Set to `production` or `development`
+- `NODE_ENV`: Set to `production` or `development` (affects build optimizations)
+- `VITE_DEPLOYMENT_ENV`: Set to `prod` or `dev` (controls debug overlay visibility)
 - `VITE_API_URL`: API endpoint URL (if applicable)
+
+### Build Arguments
+
+The Dockerfile accepts the following build arguments:
+
+- `VITE_DEPLOYMENT_ENV`: Controls whether debug tools are shown (default: `prod`)
+  - `dev`: Shows debug overlay (TanStack Router Devtools)
+  - `prod`: Hides debug overlay
 
 ### Port Configuration
 

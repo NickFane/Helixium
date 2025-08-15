@@ -18,6 +18,10 @@ RUN \
 # Copy source code
 COPY helixium-web/ .
 
+# Accept build argument for deployment environment
+ARG VITE_DEPLOYMENT_ENV=dev
+ENV VITE_DEPLOYMENT_ENV=$VITE_DEPLOYMENT_ENV
+
 # Expose Vite dev server port
 EXPOSE 5173
 
