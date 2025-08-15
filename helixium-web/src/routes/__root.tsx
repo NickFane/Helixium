@@ -8,11 +8,9 @@ import { shouldShowDebugTools } from "@/utils/runtime-config";
 export const Route = createRootRoute({
   component: () => {
     // Check if we should show debug tools based on deployment environment
-    // This is controlled by DEPLOYMENT_ENV runtime environment variable:
-    // - 'dev': Shows debug overlay (feature stack deployments)
-    // - 'prod': Hides debug overlay (production deployments)
-    // Note: This is injected at runtime, not build time, allowing single image for multiple environments
-    const showDebugTools = shouldShowDebugTools();
+    // In development mode (including tests), always show debug tools
+    // In production, use runtime configuration controlled by DEPLOYMENT_ENV
+    const showDebugTools = import.meta.env.DEV ? true : shouldShowDebugTools();
 
     return (
       <Flex direction="column" height="100vh" width="100%">

@@ -10,7 +10,7 @@ interface RuntimeConfig {
 /**
  * Get runtime configuration
  * In production: reads from window.__RUNTIME_CONFIG__ (injected by entrypoint script)
- * In development: reads from process.env (Vite dev server)
+ * In development: always shows debug tools (includes tests)
  */
 export const getRuntimeConfig = (): RuntimeConfig => {
   // Check if we're in a browser environment
@@ -22,16 +22,23 @@ export const getRuntimeConfig = (): RuntimeConfig => {
       };
     }
     
-    // Development: Vite injects process.env into import.meta.env
-    // We use a special prefix for runtime variables
+    // Development/Test: Check for explicit environment variable first
     if (import.meta.env.VITE_RUNTIME_DEPLOYMENT_ENV) {
       return {
         DEPLOYMENT_ENV: import.meta.env.VITE_RUNTIME_DEPLOYMENT_ENV
       };
     }
+    
+    // In development mode (including tests), always show debug tools
+    // This ensures tests pass and provides a good development experience
+    if (import.meta.env.DEV) {
+      return {
+        DEPLOYMENT_ENV: 'dev'
+      };
+    }
   }
   
-  // Fallback to safe default
+  // Fallback to safe default for production builds
   return {
     DEPLOYMENT_ENV: 'prod'
   };
@@ -39,6 +46,8 @@ export const getRuntimeConfig = (): RuntimeConfig => {
 
 /**
  * Check if debug tools should be shown
+ * - Production builds with runtime injection: controlled by DEPLOYMENT_ENV
+ * - Development builds (including tests): always shown
  */
 export const shouldShowDebugTools = (): boolean => {
   const config = getRuntimeConfig();

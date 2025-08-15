@@ -3,6 +3,7 @@ import { type ReactNode, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import AnimationSpeedControl from "./components/AnimationSpeedControl";
 import { type AnimationSpeed } from "./types";
+import { shouldShowDebugTools } from "@/utils/runtime-config";
 
 interface DebugContainerProps {
   children?: ReactNode;
@@ -16,6 +17,16 @@ export default function DebugContainer({
   currentAnimationSpeed,
 }: DebugContainerProps) {
   const [isOpen, setIsOpen] = useState(false);
+  
+  // Show debug tools based on environment
+  // In development mode (including tests), always show debug tools
+  // In production, use runtime configuration
+  const showDebugTools = import.meta.env.DEV ? true : shouldShowDebugTools();
+  
+  // If debug tools should not be shown, return null
+  if (!showDebugTools) {
+    return null;
+  }
 
   return (
     <>
