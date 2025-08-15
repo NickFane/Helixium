@@ -3,6 +3,7 @@ import { createRootRoute, Outlet } from "@tanstack/react-router";
 import { TanStackRouterDevtools } from "@tanstack/react-router-devtools";
 import Navbar from "@/features/navbar";
 import PageTransition from "@/components/PageTransition";
+import EnvironmentIndicator from "@/components/EnvironmentIndicator";
 import { shouldShowDebugTools } from "@/utils/runtime-config";
 
 export const Route = createRootRoute({
@@ -20,6 +21,7 @@ export const Route = createRootRoute({
           </PageTransition>
         </Flex>
         {showDebugTools && <TanStackRouterDevtools />}
+        <EnvironmentIndicator />
       </Flex>
     );
   },
