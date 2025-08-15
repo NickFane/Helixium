@@ -23,13 +23,24 @@ export const getRuntimeConfig = (): RuntimeConfig => {
         typeof window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV === 'string' &&
         window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV.trim() !== '' &&
         window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV !== '{{DEPLOYMENT_ENV}}') {
+      
+      const deploymentEnv = window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV.trim();
+      console.log(`[RuntimeConfig] Using runtime config: ${deploymentEnv}`);
+      
       return {
-        DEPLOYMENT_ENV: window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV.trim()
+        DEPLOYMENT_ENV: deploymentEnv
       };
+    } else if (window.__RUNTIME_CONFIG__) {
+      console.warn('[RuntimeConfig] Runtime config exists but DEPLOYMENT_ENV is invalid:', {
+        value: window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV,
+        type: typeof window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV,
+        isPlaceholder: window.__RUNTIME_CONFIG__.DEPLOYMENT_ENV === '{{DEPLOYMENT_ENV}}'
+      });
     }
     
     // Development/Test: Check for explicit environment variable first
     if (import.meta.env.VITE_RUNTIME_DEPLOYMENT_ENV) {
+      console.log(`[RuntimeConfig] Using Vite env: ${import.meta.env.VITE_RUNTIME_DEPLOYMENT_ENV}`);
       return {
         DEPLOYMENT_ENV: import.meta.env.VITE_RUNTIME_DEPLOYMENT_ENV
       };
@@ -37,6 +48,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
     
     // In development mode (Vite dev server), always show debug tools
     if (import.meta.env.DEV) {
+      console.log('[RuntimeConfig] Using dev mode fallback');
       return {
         DEPLOYMENT_ENV: 'dev'
       };
@@ -44,6 +56,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
   }
   
   // Fallback to safe default for production builds
+  console.log('[RuntimeConfig] Using production fallback');
   return {
     DEPLOYMENT_ENV: 'prod'
   };
@@ -55,5 +68,7 @@ export const getRuntimeConfig = (): RuntimeConfig => {
  */
 export const shouldShowDebugTools = (): boolean => {
   const config = getRuntimeConfig();
-  return config.DEPLOYMENT_ENV === 'dev';
+  const result = config.DEPLOYMENT_ENV === 'dev';
+  console.log(`[RuntimeConfig] Debug tools: ${result ? 'ENABLED' : 'DISABLED'} (env: ${config.DEPLOYMENT_ENV})`);
+  return result;
 };
