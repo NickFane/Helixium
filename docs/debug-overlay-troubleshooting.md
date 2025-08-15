@@ -27,6 +27,28 @@ This helps immediately identify:
 - **Dev**: Whether `import.meta.env.DEV` is true
 - **HasRuntime**: Whether `window.__RUNTIME_CONFIG__` exists
 
+## Quick Diagnosis
+
+### ✅ Working Dev Environment
+```
+ENV: dev | Runtime: dev | Vite: N/A | Mode: production | Dev: false | HasRuntime: true
+```
+**Console logs:**
+```
+[RuntimeConfig] Using runtime config: dev
+[RuntimeConfig] Debug tools: ENABLED (env: dev)
+```
+
+### ❌ Broken Dev Environment (showing prod values)
+```
+ENV: prod | Runtime: prod | Vite: N/A | Mode: production | Dev: false | HasRuntime: true
+```
+**Console logs:**
+```
+[RuntimeConfig] Using runtime config: prod
+[RuntimeConfig] Debug tools: DISABLED (env: prod)
+```
+
 ## Troubleshooting Steps
 
 ### 1. Check the Environment Indicator
@@ -51,7 +73,25 @@ Open browser developer tools and look for `[RuntimeConfig]` log messages:
 [RuntimeConfig] Debug tools: ENABLED (env: dev)
 ```
 
-### 3. Check Docker Container Logs
+### 3. Check ECS Deployment Status
+
+Use the deployment check script to verify ECS configuration:
+
+```bash
+# Check dev environment
+./scripts/check-ecs-deployment.sh dev
+
+# Check production environment
+./scripts/check-ecs-deployment.sh prod
+```
+
+This will show:
+- Current service status
+- Task definition environment variables
+- Running tasks
+- Recent deployment events
+
+### 4. Check Docker Container Logs
 
 If the environment indicator shows incorrect values, check the Docker container logs:
 
@@ -74,42 +114,47 @@ Look for entrypoint script output:
 ✅ Environment variable injection successful
 ```
 
-### 4. Verify ECS Task Definition
-
-Use the debug script to check ECS configuration:
-
-```bash
-# Run the ECS debug script
-./debug-ecs-deployment.sh
-```
-
-This will show:
-- Current service status
-- Task definition environment variables
-- Running tasks
-- Recent deployment events
-
 ### 5. Common Issues and Solutions
 
 #### Issue: Environment shows "prod" on dev.helixium.nicholasfane.com
 
+**Root Cause:** The GitHub Actions deployment process was not properly setting environment variables in the ECS task definition.
+
+**Fixed in:** The deployment workflow now explicitly sets environment variables when updating the task definition:
+```bash
+.containerDefinitions[0].environment = [
+  {"name": "NODE_ENV", "value": "development"},
+  {"name": "DEPLOYMENT_ENV", "value": "dev"}
+]
+```
+
+**If still occurring:**
+1. Check if the latest deployment workflow ran successfully
+2. Verify the task definition has correct environment variables:
+   ```bash
+   aws ecs describe-task-definition --task-definition helixium-dev \
+     --query 'taskDefinition.containerDefinitions[0].environment'
+   ```
+3. Force a new deployment:
+   ```bash
+   aws ecs update-service --cluster helixium-cluster --service helixium-dev-service --force-new-deployment
+   ```
+
+#### Issue: Wrong ECS service is running
+
 **Possible causes:**
-1. Wrong ECS service is running (production instead of development)
-2. Task definition environment variables are incorrect
-3. Container deployment failed
+1. Production service is running instead of development service
+2. Load balancer is routing to wrong target group
 
 **Solutions:**
 1. Check which service is actually running:
    ```bash
    aws ecs describe-services --cluster helixium-cluster --services helixium-dev-service
+   aws ecs describe-services --cluster helixium-cluster --services helixium-service
    ```
-2. Verify the task definition has `DEPLOYMENT_ENV=dev`:
+2. Check load balancer listener rules:
    ```bash
-   aws ecs describe-task-definition --task-definition helixium-dev
-   ```
-3. Force a new deployment:
-   ```bash
-   aws ecs update-service --cluster helixium-cluster --service helixium-dev-service --force-new-deployment
+   aws elbv2 describe-rules --listener-arn <listener-arn>
    ```
 
 #### Issue: Environment indicator shows "HasRuntime: false"
@@ -156,6 +201,24 @@ docker run -e DEPLOYMENT_ENV=prod -p 8081:80 helixium-web:latest
 
 Then check `http://localhost:8080` and `http://localhost:8081` to see the different behaviors.
 
+## Recent Fixes
+
+### ECS Deployment Environment Variables (Fixed)
+
+**Issue:** Feature branch deployments were showing `prod` environment instead of `dev`.
+
+**Root Cause:** The GitHub Actions workflow was only updating the Docker image in the ECS task definition but not preserving/setting the environment variables.
+
+**Fix:** Updated `.github/workflows/helixium-web-validation.yml` to explicitly set environment variables:
+```bash
+.containerDefinitions[0].environment = [
+  {"name": "NODE_ENV", "value": "development"},
+  {"name": "DEPLOYMENT_ENV", "value": "dev"}
+]
+```
+
+**Verification:** The deployment workflow now includes verification steps that show the environment variables in the updated task definition.
+
 ## Getting Help
 
 If the debug overlay is still not working after following these steps:
@@ -164,7 +227,7 @@ If the debug overlay is still not working after following these steps:
    - Screenshot of the environment indicator
    - Browser console logs (look for `[RuntimeConfig]` messages)
    - Docker container logs
-   - ECS debug script output
+   - ECS deployment check script output (`./scripts/check-ecs-deployment.sh dev`)
 
 2. **Check Recent Changes:**
    - Was there a recent deployment?
