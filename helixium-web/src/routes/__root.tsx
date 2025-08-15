@@ -7,10 +7,9 @@ import { shouldShowDebugTools } from "@/utils/runtime-config";
 
 export const Route = createRootRoute({
   component: () => {
-    // Check if we should show debug tools based on deployment environment
-    // In development mode (including tests), always show debug tools
-    // In production, use runtime configuration controlled by DEPLOYMENT_ENV
-    const showDebugTools = import.meta.env.DEV ? true : shouldShowDebugTools();
+    // Use runtime configuration to determine if debug tools should be shown
+    // This works for both development (Vite dev server) and production (runtime injection)
+    const showDebugTools = shouldShowDebugTools();
 
     return (
       <Flex direction="column" height="100vh" width="100%">
