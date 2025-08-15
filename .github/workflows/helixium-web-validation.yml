@@ -4,6 +4,7 @@ on:
   push:
     branches:
       - "feature/**" # Trigger on pushes to feature branches (includes PR updates)
+      - "cursor/**" # Trigger on pushes to cursor branches (includes PR updates)
       - "main" # Trigger on pushes to main for production deployment
       - "master" # Trigger on pushes to master for production deployment
     paths:
@@ -129,14 +130,14 @@ jobs:
         working-directory: ./
 
       - name: Save Docker image as artifact
-        if: startsWith(github.ref, 'refs/heads/feature/')
+        if: startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/')
         run: |
           echo "💾 Saving Docker image for deployment..."
           docker save helixium-web:${{ github.sha }} | gzip > helixium-web-image.tar.gz
           echo "✅ Docker image saved as artifact"
 
       - name: Upload Docker image artifact
-        if: startsWith(github.ref, 'refs/heads/feature/')
+        if: startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/')
         uses: actions/upload-artifact@v4
         with:
           name: helixium-web-image
@@ -148,10 +149,10 @@ jobs:
           echo "🧹 Cleaning up Docker images..."
           docker rmi helixium-web-test || true
           docker rmi helixium-web-dev-test || true
-          # Clean up deployment image ONLY after artifact is created for feature branches
+          # Clean up deployment image ONLY after artifact is created for feature/cursor branches
           # NOTE: We keep the SHA-tagged image for production deployment (main/master branches)
-          if [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
-            echo "🗑️  Cleaning up feature branch deployment image (artifact already saved)"
+          if [[ "${{ github.ref }}" == refs/heads/feature/* ]] || [[ "${{ github.ref }}" == refs/heads/cursor/* ]]; then
+            echo "🗑️  Cleaning up feature/cursor branch deployment image (artifact already saved)"
             docker rmi helixium-web:${{ github.sha }} || true
           else
             echo "📦 Keeping SHA-tagged image for potential production deployment"
@@ -187,12 +188,12 @@ jobs:
           echo "✅ Quality Gate Passed!"
           echo "🚀 Code is ready for deployment"
 
-  # ===== FEATURE BRANCH DEPLOYMENT =====
+  # ===== FEATURE/CURSOR BRANCH DEPLOYMENT =====
   deploy-dev:
     runs-on: ubuntu-latest
     name: 🚀 Deploy to Dev Environment
     needs: validation
-    if: needs.validation.result == 'success' && startsWith(github.ref, 'refs/heads/feature/')
+    if: needs.validation.result == 'success' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/'))
     environment: dev
 
     env:
@@ -337,7 +338,7 @@ jobs:
 
       - name: Deployment Summary
         run: |
-          echo "🎉 Feature Branch Deployment Completed!"
+          echo "🎉 Feature/Cursor Branch Deployment Completed!"
           echo ""
           echo "✅ Deployment Details:"
           echo "  • Branch: ${{ steps.branch-info.outputs.branch-name }}"
@@ -349,7 +350,7 @@ jobs:
           echo "🌐 Dev Environment URL:"
           echo "  https://dev.helixium.nicholasfane.com"
           echo ""
-          echo "🚀 Your feature branch is now live!"
+          echo "🚀 Your feature/cursor branch is now live!"
 
       - name: Notify Slack about deployment
         if: always()
@@ -358,13 +359,13 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "@here 🌿 Feature Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
+              "text": "@here 🌿 Feature/Cursor Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
               "blocks": [
                 {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
-                    "text": "🌿 Feature Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}"
+                    "text": "🌿 Feature/Cursor Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}"
                   }
                 },
                 {
@@ -415,8 +416,8 @@ jobs:
           echo ""
           if [ "${{ needs.validation.result }}" = "success" ]; then
             echo "✅ All checks passed!"
-            if [[ "${{ github.ref }}" == refs/heads/feature/* ]]; then
-              echo "🚀 Feature branch deployment should be running..."
+            if [[ "${{ github.ref }}" == refs/heads/feature/* ]] || [[ "${{ github.ref }}" == refs/heads/cursor/* ]]; then
+              echo "🚀 Feature/cursor branch deployment should be running..."
             elif [[ "${{ github.ref }}" == refs/heads/main || "${{ github.ref }}" == refs/heads/master ]]; then
               echo "🎯 Production deployment ready"
             fi

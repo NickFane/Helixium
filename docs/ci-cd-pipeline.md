@@ -13,7 +13,8 @@ This document describes the complete CI/CD pipeline for Helixium, including AWS 
 │   GitHub Repo   │───▶│  GitHub Actions │───▶│   AWS ECR       │───▶│   AWS ECS       │
 │                 │    │                 │    │                 │    │                 │
 │ feature/*       │    │ Build & Push    │    │ helixium-web    │    │ Fargate Service │
-│ main/master     │    │ Workflow        │    │ helixium-web-dev│    │ Load Balancer   │
+│ cursor/*        │    │ Workflow        │    │ helixium-web-dev│    │ Load Balancer   │
+│ main/master     │    │                 │    │                 │    │                 │
 └─────────────────┘    └─────────────────┘    └─────────────────┘    └─────────────────┘
                               │                                              │
                               ▼                                              ▼
