@@ -21,7 +21,7 @@ export const Route = createRootRoute({
           </PageTransition>
         </Flex>
         {showDebugTools && <TanStackRouterDevtools />}
-        <EnvironmentIndicator />
+        {showDebugTools && <EnvironmentIndicator />}
       </Flex>
     );
   },
