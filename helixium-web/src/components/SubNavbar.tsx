@@ -1,4 +1,4 @@
-import { Box, HStack, Button } from "@chakra-ui/react";
+import { Box, HStack } from "@chakra-ui/react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useMemo } from "react";
 
@@ -84,28 +84,42 @@ const SubNavbar = () => {
           {activeSubNav.map((item, index) => (
             <Box key={index}>
               {item.isDisabled ? (
-                <Button
-                  size="sm"
-                  variant={item.isActive ? "solid" : "ghost"}
-                  colorScheme={item.isActive ? "blue" : "gray"}
-                  disabled
-                  opacity={0.5}
-                  _hover={{}}
+                <Box
+                  as="span"
+                  px={3}
+                  py={2}
+                  borderRadius="md"
+                  color="gray.500"
+                  fontSize="sm"
+                  fontWeight="medium"
+                  opacity={0.6}
+                  cursor="not-allowed"
                 >
                   {item.label}
-                </Button>
+                </Box>
               ) : (
                 <Link to={item.path}>
-                  <Button
-                    size="sm"
-                    variant={item.isActive ? "solid" : "ghost"}
-                    colorScheme={item.isActive ? "blue" : "gray"}
+                  <Box
+                    as="span"
+                    px={3}
+                    py={2}
+                    borderRadius="md"
+                    color={item.isActive ? "white" : "gray.200"}
+                    fontSize="sm"
+                    fontWeight="medium"
+                    cursor="pointer"
+                    bg={item.isActive ? "gray.600" : "transparent"}
                     _hover={{
-                      bg: item.isActive ? undefined : "gray.700",
+                      bg: item.isActive ? "gray.600" : "gray.700",
+                      color: "white",
                     }}
+                    _active={{
+                      bg: "gray.600",
+                    }}
+                    transition="all 0.2s"
                   >
                     {item.label}
-                  </Button>
+                  </Box>
                 </Link>
               )}
             </Box>

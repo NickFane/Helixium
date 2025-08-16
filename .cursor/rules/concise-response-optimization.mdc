@@ -1,0 +1,171 @@
+---
+alwaysApply: true
+---
+
+# Concise Response Optimization
+
+## Overview
+
+When finalizing prompts and providing summaries, prioritize short, concise responses over verbose text dumps to minimize token usage and improve response efficiency.
+
+## Response Structure Guidelines
+
+### ✅ Preferred: Concise Summaries
+
+**Use bullet points and brief explanations:**
+
+- Focus on key changes made
+- List essential outcomes
+- Provide next steps if relevant
+- Avoid unnecessary elaboration
+
+**Example Good Summary:**
+
+```
+✅ Navigation Updated
+- Fixed sub-navbar text styling to match main navbar
+- Improved readability with white/gray.200 colors
+- Added smooth transitions and consistent hover states
+Build passes, ready for testing.
+```
+
+### ❌ Avoid: Verbose Text Dumps
+
+**Don't include:**
+
+- Lengthy technical explanations unless specifically requested
+- Detailed code walkthroughs for simple changes
+- Repetitive information already covered
+- Unnecessary background context
+- Excessive use of emojis and formatting
+
+**Example Verbose Response to Avoid:**
+
+```
+🎨 I've successfully refactored the sub-navbar styling to exactly match the main navbar's text styling approach with comprehensive improvements across multiple dimensions...
+
+[Followed by 500+ words of detailed explanation]
+```
+
+## Content Prioritization
+
+### High Priority (Always Include)
+
+1. **What was changed** - Brief description
+2. **Status confirmation** - Build/test results
+3. **User-requested outcomes** - Direct answers to user queries
+
+### Medium Priority (Include if Relevant)
+
+4. **Next steps** - If action required
+5. **Key technical details** - If user specifically asked
+
+### Low Priority (Avoid Unless Requested)
+
+6. **Implementation details** - How it was coded
+7. **Design rationale** - Why specific approaches chosen
+8. **Future considerations** - Potential improvements
+
+## Response Length Guidelines
+
+### Target Lengths by Task Type
+
+- **Simple changes**: 2-4 lines
+- **Bug fixes**: 3-6 lines
+- **Feature implementations**: 5-10 lines
+- **Complex refactoring**: 8-15 lines
+
+### Token Efficiency Strategies
+
+- Use **bullet points** instead of paragraphs
+- **Combine related points** into single bullets
+- **Eliminate filler words** and unnecessary adjectives
+- **Use symbols** (✅❌🔧) sparingly for clarity, not decoration
+
+## Examples by Scenario
+
+### File Modification
+
+**Concise:**
+
+```
+✅ Updated SubNavbar.tsx
+- Replaced Button components with Box elements
+- Applied main navbar color scheme (white/gray.200)
+- Added consistent hover states
+Build successful.
+```
+
+**Avoid:**
+
+```
+🎨 I've completely refactored the SubNavbar component by implementing a comprehensive overhaul of the styling approach to ensure perfect visual consistency with the main navigation component...
+```
+
+### Bug Fix
+
+**Concise:**
+
+```
+✅ Fixed e2e test failures
+- Updated heading selectors to match actual UI text
+- Removed CSS color assertions (unreliable)
+- All 27 tests now pass
+```
+
+### Feature Addition
+
+**Concise:**
+
+```
+✅ Added side-by-side layout
+- Gene questions: SimpleGrid md:2 columns
+- External access: SimpleGrid lg:2 columns
+- Responsive: stacks on mobile
+Ready for review.
+```
+
+## Special Cases
+
+### When Verbose Response IS Appropriate
+
+- User explicitly asks for detailed explanation
+- Complex debugging requiring step-by-step analysis
+- Documentation or educational content
+- First-time implementation of complex patterns
+
+### Error Reporting
+
+**Concise Error Format:**
+
+```
+❌ Build failed: [specific error]
+- Root cause: [brief explanation]
+- Fix: [solution applied]
+- Status: [resolved/pending]
+```
+
+## Markdown Efficiency
+
+### Use Minimal Formatting
+
+- **Bold** for key terms only
+- `Code blocks` for actual code/commands
+- Single emoji per section maximum
+- Avoid nested formatting
+
+### Structure for Scanning
+
+- Lead with outcome/status
+- Group related changes
+- End with status/next steps
+- Use consistent bullet style
+
+## Implementation Notes
+
+- Apply after completing work, not during process
+- Focus on user's immediate needs
+- Save detailed explanations for when explicitly requested
+- Measure success by clarity, not word count
+
+Remember: **Clear and concise beats comprehensive and verbose.** The user wants to know what happened and that it works - details can be provided on request.

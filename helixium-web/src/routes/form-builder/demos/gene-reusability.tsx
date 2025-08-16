@@ -6,6 +6,7 @@ import {
   Button,
   Code,
   Separator,
+  SimpleGrid,
 } from "@chakra-ui/react";
 import { useStore } from "jotai";
 import { useState } from "react";
@@ -77,7 +78,7 @@ function GeneReusabilityDemo() {
             Configurable Gene Components (Same Component, Different Questions &
             State):
           </Text>
-          <VStack gap={6} align="stretch">
+          <SimpleGrid columns={{ base: 1, md: 2 }} gap={6}>
             <Box>
               <Text color="gray.300" fontSize="md" mb={3} fontWeight="medium">
                 📝 Primary Contact Information:
@@ -97,7 +98,7 @@ function GeneReusabilityDemo() {
                 questionText="What is your emergency contact's full name?"
               />
             </Box>
-          </VStack>
+          </SimpleGrid>
         </Box>
 
         <Separator borderColor="gray.600" />
@@ -107,58 +108,86 @@ function GeneReusabilityDemo() {
           <Text color="gray.200" fontSize="lg" fontWeight="medium" mb={4}>
             External Access Demo:
           </Text>
-          <VStack gap={3} align="stretch">
-            <Button
-              colorScheme="blue"
-              onClick={handleGetAllValues}
-              size="sm"
-              maxW="300px"
-            >
-              Get All Gene Values
-            </Button>
-
-            <Button
-              colorScheme="green"
-              onClick={() =>
-                handleGetSpecificValue(primaryNameGeneId, "Primary Contact")
-              }
-              size="sm"
-              maxW="300px"
-            >
-              Get Primary Contact Value
-            </Button>
-
-            <Button
-              colorScheme="orange"
-              onClick={() =>
-                handleGetSpecificValue(
-                  emergencyContactGeneId,
-                  "Emergency Contact"
-                )
-              }
-              size="sm"
-              maxW="300px"
-            >
-              Get Emergency Contact Value
-            </Button>
-
-            {Object.keys(externalValues).length > 0 && (
-              <Box mt={4} p={4} bg="gray.900" borderRadius="md">
-                <Text color="gray.200" fontSize="sm" mb={2}>
-                  {lastAction}:
-                </Text>
-                <Code
-                  display="block"
-                  p={3}
-                  bg="gray.800"
-                  color="gray.100"
-                  whiteSpace="pre"
+          <SimpleGrid columns={{ base: 1, lg: 2 }} gap={6} alignItems="start">
+            {/* Control Panel */}
+            <Box>
+              <Text color="gray.300" fontSize="md" mb={3} fontWeight="medium">
+                🎛️ External Access Controls:
+              </Text>
+              <VStack gap={3} align="stretch">
+                <Button
+                  colorScheme="blue"
+                  onClick={handleGetAllValues}
+                  size="sm"
+                  w="full"
                 >
-                  {JSON.stringify(externalValues, null, 2)}
-                </Code>
-              </Box>
-            )}
-          </VStack>
+                  Get All Gene Values
+                </Button>
+
+                <Button
+                  colorScheme="green"
+                  onClick={() =>
+                    handleGetSpecificValue(primaryNameGeneId, "Primary Contact")
+                  }
+                  size="sm"
+                  w="full"
+                >
+                  Get Primary Contact Value
+                </Button>
+
+                <Button
+                  colorScheme="orange"
+                  onClick={() =>
+                    handleGetSpecificValue(
+                      emergencyContactGeneId,
+                      "Emergency Contact"
+                    )
+                  }
+                  size="sm"
+                  w="full"
+                >
+                  Get Emergency Contact Value
+                </Button>
+              </VStack>
+            </Box>
+
+            {/* Results Display */}
+            <Box>
+              <Text color="gray.300" fontSize="md" mb={3} fontWeight="medium">
+                📊 Retrieved Values:
+              </Text>
+              {Object.keys(externalValues).length > 0 ? (
+                <Box p={4} bg="gray.900" borderRadius="md" h="fit-content">
+                  <Text color="gray.200" fontSize="sm" mb={2}>
+                    {lastAction}:
+                  </Text>
+                  <Code
+                    display="block"
+                    p={3}
+                    bg="gray.800"
+                    color="gray.100"
+                    whiteSpace="pre"
+                    fontSize="sm"
+                  >
+                    {JSON.stringify(externalValues, null, 2)}
+                  </Code>
+                </Box>
+              ) : (
+                <Box
+                  p={4}
+                  bg="gray.900"
+                  borderRadius="md"
+                  border="2px dashed"
+                  borderColor="gray.600"
+                  textAlign="center"
+                >
+                  <Text color="gray.400" fontSize="sm">
+                    Click a button above to retrieve gene values
+                  </Text>
+                </Box>
+              )}
+            </Box>
+          </SimpleGrid>
         </Box>
 
         <Separator borderColor="gray.600" />
