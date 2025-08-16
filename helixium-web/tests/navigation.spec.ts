@@ -6,16 +6,16 @@ test.describe('Navigation and Page Transitions', () => {
         await page.waitForLoadState('networkidle');
 
         // Look for navigation links (adjust based on your actual nav structure)
-        const sampleFormLink = page.locator('a[href="/SampleFormRoute"], button:has-text("Sample Form")');
+        const formBuilderLink = page.locator('a[href="/form-builder"], button:has-text("Form Builder")');
         const homeLink = page.locator('a[href="/"], button:has-text("Home")');
 
-        // Test navigation to Sample Form page if it exists
-        if (await sampleFormLink.isVisible()) {
-            await sampleFormLink.click();
+        // Test navigation to Form Builder page if it exists
+        if (await formBuilderLink.isVisible()) {
+            await formBuilderLink.click();
             await page.waitForLoadState('networkidle');
 
             // Check URL changed
-            await expect(page).toHaveURL(/\/SampleFormRoute/);
+            await expect(page).toHaveURL(/\/form-builder/);
 
             // Navigate back to home if home link exists
             if (await homeLink.isVisible()) {
@@ -52,9 +52,9 @@ test.describe('Navigation and Page Transitions', () => {
                 await slowerButton.click();
 
                 // Test navigation with slower animation
-                const sampleFormLink = page.locator('a[href="/SampleFormRoute"], button:has-text("Sample Form")');
-                if (await sampleFormLink.isVisible()) {
-                    await sampleFormLink.click();
+                const formBuilderLink = page.locator('a[href="/form-builder"], button:has-text("Form Builder")');
+                if (await formBuilderLink.isVisible()) {
+                    await formBuilderLink.click();
                     await page.waitForLoadState('networkidle');
                 }
             }
