@@ -66,7 +66,7 @@ Developers may still use neutral aliases (`Journey`, `Page`, `Question`) in code
   "type": "object",
   "required": ["version", "id", "title", "strands"],
   "properties": {
-    "version": { "type": "string", "pattern": "^v\\d+\\.\\d+$" },
+    "version": { "type": "string", "pattern": "^v\\d+\\.\\d+(?:\\.\\d+)?$" },
     "id": { "type": "string", "description": "Unique key for analytics & versioning" },
     "title": { "type": "string" },
     "description": { "type": "string" },
@@ -113,6 +113,7 @@ Developers may still use neutral aliases (`Journey`, `Page`, `Question`) in code
         },
         "options": {
           "type": "array",
+          "minItems": 1,
           "items": {
             "type": "object",
             "required": ["value", "label"],
@@ -126,6 +127,8 @@ Developers may still use neutral aliases (`Journey`, `Page`, `Question`) in code
     }
   }
 }
+
+// … partial excerpt above; additional reserved fields for future compatibility (accessibility hints, localisation keys, advanced validation) have been omitted for brevity.
 ```
 
 > 🔍 **Note**: Conditional logic properties (`visibility`, `dependsOn`) will be added in v0.2 without breaking existing genomes.

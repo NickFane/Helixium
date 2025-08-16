@@ -93,7 +93,7 @@ export function useGenomeLoader(path: string) {
 }
 ```
 
-* CI step*: add `yarn validate:genomes` that runs `ajv-cli validate -s genome.schema.json -d "src/genomes/**/*.json"`.
+*CI step:* add `yarn validate:genomes` that runs `ajv-cli validate -s genome.schema.json -d "src/genomes/**/*.json"`.
 
 ### 4.2 Context & Atoms
 
@@ -157,7 +157,7 @@ Fallback: choose variant based on querystring (`?variant=b`).
 
 ### 4.8 Hot Reload Experience
 
-Vite already reloads JSON imports.  During dev we can import genome via `import genome from '@/genomes/car-insurance-v0.1.json'` which triggers HMR, but production should `fetch()` remote JSON for non-redeploy updates.
+Vite already reloads JSON imports. During dev we can import genome via `import genome from '@/genomes/car-insurance-v0.1.json'` which triggers HMR, but production should `fetch()` remote JSON for non-redeploy updates.
 
 ### 4.9 Testing Strategy
 
