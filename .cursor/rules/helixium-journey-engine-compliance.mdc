@@ -1,6 +1,6 @@
 ---
-globs: **/form-builder/**,**/journey-engine/**,**/genomes/**,**/polymerase/**
 description: Guidelines for building form-builder components and core Helixium Journey Engine features
+alwaysApply: false
 ---
 
 # Helixium Journey Engine Development Compliance Rule

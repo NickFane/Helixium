@@ -1,0 +1,246 @@
+# CLI Output Optimization for Token Efficiency
+
+---
+
+## alwaysApply: true
+
+## Overview
+
+Always prefer CLI tools, commands, and options that limit console output to minimize token usage and improve response efficiency. Use verbose options only when troubleshooting specific issues, not as the default approach.
+
+## General Principles
+
+### 1. **Default to Concise Output**
+
+- Use summary/brief options by default
+- Limit line counts and verbosity
+- Filter output to essential information only
+- Save verbose output for debugging scenarios
+
+### 2. **Escalate to Verbose When Needed**
+
+- Start with minimal output
+- If issue isn't clear, then add verbosity
+- Use targeted verbose options (not global verbosity)
+- Return to concise output after debugging
+
+## Tool-Specific Optimizations
+
+### **Git Commands**
+
+**Preferred (Concise):**
+
+```bash
+git status --porcelain              # vs git status
+git log --oneline -10               # vs git log
+git diff --name-only                # vs git diff
+git branch --format='%(refname:short)'  # vs git branch -v
+```
+
+**When to Use Verbose:**
+
+```bash
+git status -v                       # When file changes unclear
+git log -p                          # When commit details needed
+git diff                            # When seeing actual changes needed
+```
+
+### **Package Managers**
+
+**Preferred (Concise):**
+
+```bash
+yarn install --silent              # vs yarn install
+npm ls --depth=0                    # vs npm ls
+yarn test --silent                  # vs yarn test
+yarn build --silent                # vs yarn build
+```
+
+**When to Use Verbose:**
+
+```bash
+yarn install --verbose             # When debugging install issues
+npm ls --all                       # When dependency conflicts exist
+```
+
+### **Testing Tools**
+
+**Preferred (Concise):**
+
+```bash
+yarn test:e2e --reporter=dot       # vs --reporter=line
+yarn test --silent                 # vs default output
+jest --passWithNoTests              # vs verbose test output
+```
+
+**When to Use Verbose:**
+
+```bash
+yarn test:e2e --reporter=line      # When tests are failing
+yarn test --verbose                # When debugging test issues
+jest --verbose                     # When test behavior unclear
+```
+
+### **Build Tools**
+
+**Preferred (Concise):**
+
+```bash
+yarn build --silent                # vs default build output
+vite build --mode production       # vs --mode development
+tsc --noEmit                       # vs tsc with full output
+```
+
+**When to Use Verbose:**
+
+```bash
+yarn build --verbose               # When build fails
+vite build --debug                 # When build issues exist
+```
+
+### **Docker Commands**
+
+**Preferred (Concise):**
+
+```bash
+docker ps --format "table {{.Names}}\t{{.Status}}"  # vs docker ps
+docker build -q                    # vs docker build
+docker logs --tail=20              # vs docker logs
+```
+
+**When to Use Verbose:**
+
+```bash
+docker build --progress=plain      # When build issues occur
+docker logs -f                     # When debugging runtime issues
+```
+
+### **Linting/Formatting**
+
+**Preferred (Concise):**
+
+```bash
+eslint --quiet                     # vs eslint default
+prettier --check                   # vs prettier with file output
+```
+
+**When to Use Verbose:**
+
+```bash
+eslint --debug                     # When linting rules unclear
+prettier --debug-check             # When formatting issues exist
+```
+
+## Output Limiting Strategies
+
+### **Use Head/Tail for Large Output**
+
+```bash
+yarn test | head -20               # First 20 lines
+git log --oneline | head -10       # Recent 10 commits
+docker logs app | tail -50         # Recent 50 log lines
+```
+
+### **Filter with Grep**
+
+```bash
+yarn test | grep -E "(PASS|FAIL)"  # Only test results
+git status | grep -v "node_modules" # Exclude noise
+```
+
+### **Use Format Options**
+
+```bash
+git log --pretty=format:"%h %s"    # Custom minimal format
+docker ps --format "{{.Names}}"    # Just container names
+```
+
+## Troubleshooting Escalation
+
+### **Step 1: Minimal Command**
+
+```bash
+yarn build --silent
+# If successful, stop here
+```
+
+### **Step 2: Add Basic Info**
+
+```bash
+yarn build
+# If issues apparent, move to step 3
+```
+
+### **Step 3: Full Verbosity**
+
+```bash
+yarn build --verbose
+# For debugging specific issues
+```
+
+### **Step 4: Debug Mode**
+
+```bash
+yarn build --verbose --debug
+# For complex troubleshooting only
+```
+
+## Examples in Practice
+
+### **✅ Good: Progressive Verbosity**
+
+```bash
+# Start minimal
+git status --porcelain
+
+# If unclear, add detail
+git status
+
+# If still unclear, add full context
+git status -v
+```
+
+### **❌ Avoid: Default Verbosity**
+
+```bash
+# Don't start with verbose
+git status -v
+yarn install --verbose
+docker build --progress=plain
+```
+
+## Token Efficiency Benefits
+
+- **Reduced Cache Usage**: Less output = fewer tokens = lower cache reads
+- **Faster Responses**: Less content to process and analyze
+- **Focused Debugging**: Targeted verbose output when actually needed
+- **Improved Context**: Essential information highlighted, noise reduced
+
+## Tool Integration
+
+When using tools in scripts or CI/CD:
+
+```bash
+# Use quiet/silent modes by default
+yarn install --silent --frozen-lockfile
+yarn test --silent --passWithNoTests
+yarn build --silent
+
+# Add verbosity flags only for debugging:
+if [ "$DEBUG" = "true" ]; then
+  yarn build --verbose
+else
+  yarn build --silent
+fi
+```
+
+## Emergency Debugging
+
+When encountering unclear errors:
+
+1. **Note the minimal command that failed**
+2. **Add one level of verbosity**
+3. **Use targeted verbose flags** (e.g., `--debug-only-failing`)
+4. **Return to minimal output** once issue is resolved
+
+Remember: Verbose output should be the exception, not the rule. Start minimal, escalate when needed, return to concise.

@@ -1,9 +1,0 @@
----
-description: Creating and refining documentation to improve context on the codebase
-alwaysApply: false
----
-Refer to the './docs' folder to find documentation for a given request
-
-If there is no documentation, make a suggestion to the user to create some
-
-Keep documentation concise and accurate
