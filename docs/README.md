@@ -9,9 +9,11 @@ Helixium is a "Configurable UI Journeys" project built with React, TypeScript, a
 ## 🚀 Deployment Environments
 
 ### Production
+
 **Live Application**: https://helixium.nicholasfane.com
 
 Production deployment features:
+
 - ✅ **Custom Domain**: `helixium.nicholasfane.com`
 - ✅ **SSL Certificate**: Auto-managed by AWS Certificate Manager
 - ✅ **Load Balancer**: Application Load Balancer with HTTPS
@@ -20,9 +22,11 @@ Production deployment features:
 - ✅ **Slack Notifications**: Real-time deployment status updates
 
 ### Development (Feature Branch Preview)
+
 **Live Preview**: https://dev.helixium.nicholasfane.com
 
 Development deployment features:
+
 - 🌿 **Automatic Deployment**: Every push to `feature/*` or `cursor/*` branches
 - ⚡ **Fast Pipeline**: 5-8 minute deployment time
 - 💰 **Cost Optimized**: Auto-scales to 0 when not in use
@@ -130,6 +134,17 @@ Comprehensive end-to-end testing framework covering:
 - Performance optimization and troubleshooting
 - Debugging tools and artifact analysis
 
+### 🧬 [Journey Engine Gene Implementation](journey-engine-gene-implementation.md)
+
+Initial implementation of the Journey Engine's Gene system covering:
+
+- Configurable Gene components with Jotai state management
+- External ID-based access via Gene Registry pattern
+- Sub-navbar system for contextual route navigation
+- Reusable component architecture with props-based configuration
+- Demo system showcasing gene reusability patterns
+- Foundation for config-driven journey workflows
+
 ## Project Structure
 
 ```
@@ -142,21 +157,38 @@ Helixium/
 │   ├── ci-cd-pipeline.md   # CI/CD pipeline documentation
 │   ├── domain-setup-guide.md # Custom domain configuration
 │   ├── page-transitions-debug.md # Page transitions and debug system
-│   └── playwright-e2e-testing.md # End-to-end testing documentation
+│   ├── playwright-e2e-testing.md # End-to-end testing documentation
+│   └── journey-engine-gene-implementation.md # Journey Engine Gene system
 ├── helixium-web/            # Web application
 │   ├── src/                # Source code
 │   │   ├── app/            # Core application files
 │   │   ├── components/     # Reusable UI components
-│   │   │   └── PageTransition.tsx # Page transition wrapper
+│   │   │   ├── PageTransition.tsx # Page transition wrapper
+│   │   │   └── SubNavbar.tsx # Sub-navigation for route hierarchies
 │   │   ├── features/       # Feature-based modules
 │   │   │   ├── development-tools/ # Development debug system
 │   │   │   │   ├── index.tsx # Main debug container
 │   │   │   │   ├── types.ts # Shared debug types
 │   │   │   │   └── components/
 │   │   │   │       └── AnimationSpeedControl/ # Animation speed controls
-│   │   │   ├── clickDashboard/ # Click tracking feature
+│   │   │   ├── form-builder/ # Journey Engine development hub
+│   │   │   │   ├── index.tsx # Directory page with demos/utilities
+│   │   │   │   └── genes/   # Gene component system
+│   │   │   │       ├── atoms.ts # Jotai atoms and registry
+│   │   │   │       ├── index.ts # Common exports and GeneRegistry
+│   │   │   │       └── fullname/ # Sample text input gene
+│   │   │   │           ├── FullNameGene.tsx # Configurable gene component
+│   │   │   │           └── index.ts # Gene exports
 │   │   │   ├── navbar/     # Navigation component
-│   │   │   └── sample-form/ # Form handling feature
+│   │   │   └── clickDashboard/ # Click tracking feature
+│   │   ├── routes/         # TanStack Router definitions
+│   │   │   ├── __root.tsx  # Root layout with navbar and sub-navbar
+│   │   │   ├── index.tsx   # Homepage route
+│   │   │   ├── form-builder.tsx # Form-builder layout route
+│   │   │   └── form-builder/ # Nested form-builder routes
+│   │   │       ├── index.tsx # Form-builder directory page
+│   │   │       └── demos/   # Demo routes
+│   │   │           └── gene-reusability.tsx # Gene reusability demo
 │   │   ├── hooks/          # Custom React hooks
 │   │   ├── lib/            # Third-party library configs
 │   │   ├── types/          # TypeScript type definitions
@@ -295,6 +327,9 @@ For detailed Docker instructions, see [Docker Implementation](docker-implementat
 - **Smooth Transitions** - Page transitions with Framer Motion
 - **Debug Tools** - Integrated development debug panel
 - **Test Automation** - Comprehensive E2E test suite with CI integration
+- **Journey Engine** - Configurable UI components with external state access
+- **Sub-Navigation** - Contextual navigation for route hierarchies
+- **Gene Registry** - ID-based component value access pattern
 
 ## Development Guidelines
 
