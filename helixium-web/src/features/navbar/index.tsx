@@ -33,6 +33,16 @@ const NavLink = ({ children, to }: NavLinkProps) => (
   </Link>
 );
 
+const NavBarItems = () => {
+  return (
+    <>
+      <NavLink to="/">Home</NavLink>
+      <NavLink to="/SampleFormRoute">Sample Form</NavLink>
+      <NavLink to="/form-builder">Form Builder</NavLink>
+    </>
+  );
+};
+
 export default function Navbar() {
   const [isOpen, setIsOpen] = useState(false);
 
@@ -76,8 +86,7 @@ export default function Navbar() {
             role="navigation"
             aria-label="Desktop navigation menu"
           >
-            <NavLink to="/">Home</NavLink>
-            <NavLink to="/SampleFormRoute">Sample Form</NavLink>
+            <NavBarItems />
           </HStack>
         </HStack>
       </Flex>
@@ -91,8 +100,7 @@ export default function Navbar() {
           aria-label="Mobile navigation menu"
         >
           <Stack as={"nav"} gap={4}>
-            <NavLink to="/">Home</NavLink>
-            <NavLink to="/SampleFormRoute">Sample Form</NavLink>
+            <NavBarItems />
           </Stack>
         </Box>
       ) : null}
