@@ -3,10 +3,8 @@ name: 🚀 Helixium Web CI/CD
 on:
   push:
     branches:
-      - "feature/**" # Trigger on pushes to feature branches (includes PR updates)
-      - "cursor/**" # Trigger on pushes to cursor branches (includes PR updates)
-      - "main" # Trigger on pushes to main for production deployment
-      - "master" # Trigger on pushes to master for production deployment
+      - "feature/**" # Trigger on pushes to feature branches for dev deployment
+      - "cursor/**" # Trigger on pushes to cursor branches for dev deployment
     paths:
       - "helixium-web/**"
       - "Dockerfile*"
@@ -149,14 +147,9 @@ jobs:
           echo "🧹 Cleaning up Docker images..."
           docker rmi helixium-web-test || true
           docker rmi helixium-web-dev-test || true
-          # Clean up deployment image ONLY after artifact is created for feature/cursor branches
-          # NOTE: We keep the SHA-tagged image for production deployment (main/master branches)
-          if [[ "${{ github.ref }}" == refs/heads/feature/* ]] || [[ "${{ github.ref }}" == refs/heads/cursor/* ]]; then
-            echo "🗑️  Cleaning up feature/cursor branch deployment image (artifact already saved)"
-            docker rmi helixium-web:${{ github.sha }} || true
-          else
-            echo "📦 Keeping SHA-tagged image for potential production deployment"
-          fi
+          # Clean up deployment image after artifact is created
+          echo "🗑️  Cleaning up feature/cursor branch deployment image (artifact already saved)"
+          docker rmi helixium-web:${{ github.sha }} || true
           echo "✅ Docker images cleaned up"
         working-directory: ./
 
@@ -447,11 +440,7 @@ jobs:
           echo ""
           if [ "${{ needs.test-build.result }}" = "success" ]; then
             echo "✅ All checks passed!"
-            if [[ "${{ github.ref }}" == refs/heads/feature/* ]] || [[ "${{ github.ref }}" == refs/heads/cursor/* ]]; then
-              echo "🚀 Feature/cursor branch deployment should be running..."
-            elif [[ "${{ github.ref }}" == refs/heads/main || "${{ github.ref }}" == refs/heads/master ]]; then
-              echo "🎯 Production deployment ready"
-            fi
+            echo "🚀 Feature/cursor branch deployment should be running..."
           else
             echo "❌ Some checks failed - review the logs above"
           fi
