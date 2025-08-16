@@ -36,7 +36,6 @@ jobs:
     if: github.event_name == 'workflow_dispatch' || github.event_name == 'push' || (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success')
     outputs:
       ecr-repo-url: ${{ steps.get-ecr-urls.outputs.ecr-repo-url }}
-      ecr-dev-repo-url: ${{ steps.get-ecr-urls.outputs.ecr-dev-repo-url }}
       image-tag: ${{ steps.set-tag.outputs.tag }}
 
     steps:
@@ -86,23 +85,15 @@ jobs:
             --query 'repositories[0].repositoryUri' \
             --output text 2>/dev/null || echo "")
 
-          # Get development repository URL  
-          ECR_DEV_REPO_URL=$(aws ecr describe-repositories \
-            --repository-names helixium-web-dev \
-            --query 'repositories[0].repositoryUri' \
-            --output text 2>/dev/null || echo "")
-
-          if [ -n "$ECR_REPO_URL" ] && [ -n "$ECR_DEV_REPO_URL" ]; then
+          if [ -n "$ECR_REPO_URL" ]; then
             echo "ecr-repo-url=$ECR_REPO_URL" >> $GITHUB_OUTPUT
-            echo "ecr-dev-repo-url=$ECR_DEV_REPO_URL" >> $GITHUB_OUTPUT
-            echo "✅ ECR repository URLs retrieved from AWS"
+            echo "✅ ECR production repository URL retrieved from AWS"
             echo "  Production: $ECR_REPO_URL"
-            echo "  Development: $ECR_DEV_REPO_URL"
           else
-            echo "❌ Could not get ECR repository URLs from AWS"
+            echo "❌ Could not get ECR production repository URL from AWS"
             echo "💡 This might mean:"
             echo "   - Infrastructure hasn't been deployed yet"
-            echo "   - ECR repositories don't exist"
+            echo "   - ECR production repository doesn't exist"
             echo "   - AWS credentials don't have ECR permissions"
             echo ""
             echo "🔧 Please run the infrastructure deployment workflow first"
@@ -160,16 +151,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Build and push development Docker image
-        if: github.ref == 'refs/heads/main' || github.ref == 'refs/heads/master'
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile.dev
-          push: true
-          tags: ${{ needs.setup.outputs.ecr-dev-repo-url }}:${{ needs.setup.outputs.image-tag }}
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
+
 
       # Note: PR builds should NOT push to ECR - this step has been removed
       # PR validation is handled by helixium-web-ci-cd.yml workflow
@@ -388,12 +370,6 @@ jobs:
                 echo "  • Production: ${{ needs.setup.outputs.ecr-repo-url }}:${{ needs.setup.outputs.image-tag }}"
               else
                 echo "  • Production: ECR repository URL not available"
-              fi
-              
-              if [ -n "${{ needs.setup.outputs.ecr-dev-repo-url }}" ]; then
-                echo "  • Development: ${{ needs.setup.outputs.ecr-dev-repo-url }}:${{ needs.setup.outputs.image-tag }}"
-              else
-                echo "  • Development: ECR repository URL not available"
               fi
             else
               echo "  • No images pushed (this workflow only runs on main/master branches)"
