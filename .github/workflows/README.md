@@ -62,7 +62,7 @@ This directory contains the GitHub Actions workflows for the Helixium project. T
 - Deploys to ECS and waits for stability
 - Provides application URL for testing
 
-**Note:** This workflow only runs on main/master branches. PR validation is handled separately by the `helixium-web-validation.yml` workflow.
+**Note:** This workflow only runs on main/master branches. PR validation is handled separately by the `helixium-web-ci-cd.yml` workflow.
 
 **When to use:**
 
@@ -70,16 +70,16 @@ This directory contains the GitHub Actions workflows for the Helixium project. T
 - Docker configuration changes
 - New application deployments
 
-### 3. Helixium Web Validation (PR Quality Gate)
+### 3. Helixium Web CI/CD (Test, Build & Deploy)
 
-**File:** `helixium-web-validation.yml`
+**File:** `helixium-web-ci-cd.yml`
 
-**Purpose:** PR quality gate that validates frontend application and Docker configuration before merge.
+**Purpose:** Complete CI/CD pipeline that tests, builds, validates, and deploys the frontend application to development environment.
 
 **Triggers:**
 
-- **Pull requests** to main/master branch
-- Changes to `helixium-web/**` files
+- **Push** to `feature/**`, `cursor/**`, `main`, and `master` branches
+- Changes to `helixium-web/**`, Docker files, workflows, or Terraform files
 - Changes to Docker-related files (`Dockerfile*`, `docker-compose.yml`, `nginx.conf`, `.dockerignore`)
 - Manual trigger for testing
 

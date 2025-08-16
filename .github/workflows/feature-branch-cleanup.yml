@@ -1,4 +1,4 @@
-name: Feature/Cursor Branch Cleanup
+name: 🧹 Feature/Cursor Branch Cleanup
 
 on:
   pull_request:

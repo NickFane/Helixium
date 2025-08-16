@@ -172,7 +172,7 @@ jobs:
           cache-to: type=gha,mode=max
 
       # Note: PR builds should NOT push to ECR - this step has been removed
-      # PR validation is handled by helixium-web-validation.yml workflow
+      # PR validation is handled by helixium-web-ci-cd.yml workflow
 
   deploy-ecs:
     runs-on: ubuntu-latest
