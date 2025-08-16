@@ -3,7 +3,7 @@
 **Project:** Config-Driven Journey Engine  
 **Version:** 0.1 (Draft)  
 **Prepared by:** Product & Architecture Team  
-**Date:** <!-- YYYY-MM-DD placeholder -->
+**Date:** 2025-08-16
 
 ---
 
@@ -55,14 +55,14 @@ Primary business value:
 
 ## 4. Stakeholders & Responsibilities
 
-| Role | Name (placeholder) | Responsibility |
-|------|--------------------|----------------|
-| Product Owner | TBD | Owns roadmap & KPIs |
-| UX Lead | TBD | Designs Gene/Strand UI & copy |
-| Engineering Lead | TBD | Delivers engine & integration |
-| Data / Analytics | TBD | Defines GA4 event schema & monitors metrics |
-| DevOps | TBD | CI/CD, feature-flag rollout, infra |
-| Compliance | TBD | Reviews data handling, PII regulations |
+| Role | Name | Responsibility |
+|------|------|----------------|
+| Product Owner | _TBD_ | Owns roadmap & KPIs |
+| UX Lead | _TBD_ | Designs Gene/Strand UI & copy |
+| Engineering Lead | _TBD_ | Delivers engine & integration |
+| Data / Analytics | _TBD_ | Defines GA4 event schema & monitors metrics |
+| DevOps | _TBD_ | CI/CD, feature-flag rollout, infra |
+| Compliance | _TBD_ | Reviews data handling, PII regulations |
 
 ---
 
