@@ -70,7 +70,7 @@ const SubNavbar = () => {
       borderBottom="1px solid"
       borderColor="gray.700"
       position="fixed"
-      top="64px" // Right below main navbar (64px height)
+      top="calc(var(--navbar-height, 64px))"
       left={0}
       right={0}
       zIndex={999} // Lower than main navbar (1000)
