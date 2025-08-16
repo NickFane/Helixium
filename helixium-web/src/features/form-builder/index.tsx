@@ -7,7 +7,8 @@ const FormBuilder = () => {
         🛠️ Form Builder
       </Heading>
       <Text color="gray.300" fontSize="md">
-        Premium feature coming soon - this will be the foundation for configurable journey workflows.
+        Premium feature coming soon - this will be the foundation for
+        configurable journey workflows.
       </Text>
     </Box>
   );
