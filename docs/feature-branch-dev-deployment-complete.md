@@ -35,12 +35,12 @@ This document details the complete feature/cursor branch development deployment 
 ### GitHub Actions Workflow
 
 #### Single Optimized Workflow
-**File**: `.github/workflows/helixium-web-validation.yml`
+**File**: `.github/workflows/helixium-web-ci-cd.yml`
 
 **Jobs**:
-1. **Validation** (🔍 Validate Frontend & Docker)
+1. **Test-Build** (🔍 Test, Build & Validate)
 2. **Deploy-Dev** (🚀 Deploy to Dev Environment) 
-3. **Summary** (📋 Validation Summary)
+3. **Summary** (📋 CI/CD Summary)
 
 ## 🔄 Workflow Deep Dive
 
@@ -63,8 +63,8 @@ on:
       - "terraform/**"
 ```
 
-### Job 1: Validation & Build
-**Purpose**: Quality gate + Docker image preparation
+### Job 1: Test, Build & Validate  
+**Purpose**: Complete CI pipeline - test, build, and validate all components
 
 **Key Optimizations**:
 - **Single Docker build** with dual tags (validation + deployment)
@@ -96,7 +96,7 @@ on:
 
 **Deployment Conditions**:
 ```yaml
-if: needs.validation.result == 'success' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/'))
+if: needs.test-build.result == 'success' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/'))
 ```
 
 **Cost Optimization**:
@@ -125,7 +125,7 @@ if: needs.validation.result == 'success' && (startsWith(github.ref, 'refs/heads/
    ```
 
 3. **Automatic Pipeline**
-   - ✅ Validation runs (5-8 minutes)
+   - ✅ Test & Build runs (5-8 minutes)
    - ✅ Deployment runs (3-5 minutes)
    - ✅ Slack notification sent
    - ✅ Environment live at `https://dev.helixium.nicholasfane.com`
@@ -146,7 +146,7 @@ if: needs.validation.result == 'success' && (startsWith(github.ref, 'refs/heads/
 
 ### 1. Single Workflow Strategy
 **Problem**: Multiple workflows causing duplicate runs and complexity
-**Solution**: Merged everything into `helixium-web-validation.yml`
+**Solution**: Merged everything into `helixium-web-ci-cd.yml`
 **Benefit**: Predictable, efficient, maintainable
 
 ### 2. Docker Build Optimization  

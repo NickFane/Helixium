@@ -1,4 +1,4 @@
-name: Helixium Web Validation
+name: 🚀 Helixium Web CI/CD
 
 on:
   push:
@@ -18,12 +18,12 @@ on:
   workflow_dispatch: # Allow manual triggering for testing
 
 jobs:
-  validation:
+  test-build:
     runs-on: ubuntu-latest
-    name: 🔍 Validate Frontend & Docker
+    name: 🔍 Test, Build & Validate
 
     steps:
-      # ===== PART 1: FRONTEND VALIDATION =====
+      # ===== PART 1: FRONTEND TESTING =====
 
       - name: Checkout code
         uses: actions/checkout@v4
@@ -160,40 +160,40 @@ jobs:
           echo "✅ Docker images cleaned up"
         working-directory: ./
 
-      # ===== PART 3: VALIDATION SUMMARY =====
+      # ===== PART 3: BUILD SUMMARY =====
 
-      - name: Validation Summary
+      - name: Build Summary
         run: |
-          echo "🎉 Validation Completed Successfully!"
+          echo "🎉 Test, Build & Validation Completed Successfully!"
           echo ""
-          echo "✅ Frontend Validation:"
+          echo "✅ Frontend Testing & Build:"
           echo "  • Dependencies installed"
           echo "  • Linting passed"
           echo "  • TypeScript check passed"
-          echo "  • Build successful"
+          echo "  • Production build successful"
           echo ""
           echo "✅ E2E Testing:"
           echo "  • Playwright browsers installed"
           echo "  • Development server started"
           echo "  • End-to-end tests passed"
           echo ""
-          echo "✅ Docker Validation:"
+          echo "✅ Docker Build & Validation:"
           echo "  • Docker Compose configuration valid"
-          echo "  • Production Docker build successful"
-          echo "  • Development Docker build successful"
+          echo "  • Production Docker image built"
+          echo "  • Development Docker image built"
           echo "  • Container startup test passed"
           echo "  • Nginx configuration valid"
-          echo "  • Docker images cleaned up"
+          echo "  • Docker images ready for deployment"
           echo ""
           echo "✅ Quality Gate Passed!"
-          echo "🚀 Code is ready for deployment"
+          echo "🚀 Ready for deployment to dev environment"
 
   # ===== FEATURE/CURSOR BRANCH DEPLOYMENT =====
   deploy-dev:
     runs-on: ubuntu-latest
     name: 🚀 Deploy to Dev Environment
-    needs: validation
-    if: needs.validation.result == 'success' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/'))
+    needs: test-build
+    if: needs.test-build.result == 'success' && (startsWith(github.ref, 'refs/heads/feature/') || startsWith(github.ref, 'refs/heads/cursor/'))
     environment: dev
 
     env:
@@ -315,17 +315,17 @@ jobs:
       - name: Verify deployment configuration
         run: |
           echo "🔍 Verifying deployment configuration..."
-          
+
           echo "📋 Current dev service configuration:"
           aws ecs describe-services --cluster ${{ env.ECS_CLUSTER }} --services ${{ env.ECS_DEV_SERVICE }} \
             --query 'services[0].{ServiceName:serviceName,TaskDefinition:taskDefinition,DesiredCount:desiredCount,RunningCount:runningCount}' \
             --output table
-          
+
           echo "📝 Current task definition environment variables:"
           aws ecs describe-task-definition --task-definition ${{ steps.deploy.outputs.task-definition }} \
             --query 'taskDefinition.containerDefinitions[0].environment' \
             --output table
-          
+
           echo "🎯 Target group health:"
           aws elbv2 describe-target-health --target-group-arn $(aws elbv2 describe-target-groups --names "helixium-dev-tg" --query 'TargetGroups[0].TargetGroupArn' --output text) \
             --output table || echo "Could not check target group health"
@@ -377,6 +377,11 @@ jobs:
           echo "  https://dev.helixium.nicholasfane.com"
           echo ""
           echo "🚀 Your feature/cursor branch is now live!"
+          echo ""
+          echo "💡 Note: When you close/merge your PR, the cleanup workflow will:"
+          echo "  • Scale down the dev service to 0 (cost savings)"
+          echo "  • Clean up old ECR images"
+          echo "  • Send cleanup notification to Slack"
 
       - name: Notify Slack about deployment
         if: always()
@@ -428,19 +433,19 @@ jobs:
   # ===== VALIDATION SUMMARY =====
   summary:
     runs-on: ubuntu-latest
-    name: 📋 Validation Summary
-    needs: [validation]
-    if: always() && (needs.validation.result == 'success' || needs.validation.result == 'failure')
+    name: 📋 CI/CD Summary
+    needs: [test-build]
+    if: always() && (needs.test-build.result == 'success' || needs.test-build.result == 'failure')
 
     steps:
-      - name: Validation Summary
+      - name: CI/CD Summary
         run: |
-          echo "📋 Helixium Web Validation Summary"
-          echo "=================================="
+          echo "📋 Helixium Web CI/CD Summary"
+          echo "============================="
           echo ""
-          echo "🔍 Validation: ${{ needs.validation.result == 'success' && '✅ Passed' || '❌ Failed' }}"
+          echo "🔍 Test & Build: ${{ needs.test-build.result == 'success' && '✅ Passed' || '❌ Failed' }}"
           echo ""
-          if [ "${{ needs.validation.result }}" = "success" ]; then
+          if [ "${{ needs.test-build.result }}" = "success" ]; then
             echo "✅ All checks passed!"
             if [[ "${{ github.ref }}" == refs/heads/feature/* ]] || [[ "${{ github.ref }}" == refs/heads/cursor/* ]]; then
               echo "🚀 Feature/cursor branch deployment should be running..."
