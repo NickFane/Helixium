@@ -7,7 +7,7 @@ description: Core development standards and patterns for the Helixium project
 
 ## Documentation-First Approach
 
-- ALWAYS check existing documentation before implementing new features
+- check existing documentation before implementing new features
 - Reference established patterns from docs/ folder when making architectural decisions
 - Follow the folder structure and conventions documented in docs/README.md
 - Update documentation when adding new features or changing architecture
