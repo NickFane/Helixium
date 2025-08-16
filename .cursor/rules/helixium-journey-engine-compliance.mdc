@@ -1,0 +1,153 @@
+---
+globs: **/form-builder/**,**/journey-engine/**,**/genomes/**,**/polymerase/**
+description: Guidelines for building form-builder components and core Helixium Journey Engine features
+---
+
+# Helixium Journey Engine Development Compliance Rule
+
+## Overview
+
+When building form-builder components or any features related to the core Helixium Journey Engine, all implementations must align with the architectural and business specifications defined in the `./Helixium/docs/` directory.
+
+## Required Reference Documents
+
+Always consult these architectural documents before and during implementation:
+
+1. **[Business Requirements Document](mdc:Helixium/docs/business-requirements-journey-engine.md)** - Core business goals, KPIs, and functional requirements
+2. **[Config-Driven Journeys](mdc:Helixium/docs/config-driven-journeys.md)** - Technical architecture and JSON schema specifications
+3. **[Journey Engine Glossary](mdc:Helixium/docs/journey-engine-glossary.md)** - Standardized terminology and naming conventions
+4. **[Config-Driven Implementation](mdc:Helixium/docs/config-driven-journeys-implementation.md)** - Implementation guidance and technical details
+5. **[Journey Engine Packaging](mdc:Helixium/docs/journey-engine-packaging.md)** - Package structure and distribution strategy
+
+## Mandatory Implementation Standards
+
+### 1. Terminology Compliance
+
+- **Use the official Helixium DNA-themed terminology** in all code:
+  - `Genome` - Complete journey configuration (not "journey" or "form")
+  - `Strand` - Logical page/step (not "page" or "step")
+  - `Gene` - Single question component (not "question" or "field")
+  - `Allele` - User's answer value (not "answer" or "value")
+  - `Polymerase` - Runtime engine (not "engine" or "renderer")
+
+### 2. JSON Schema Validation
+
+- All Genome configurations must validate against the canonical JSON schema
+- Implement runtime validation with descriptive error messages
+- Support the required Gene types: text, number, date, singleChoice, multiChoice
+- Follow the exact schema structure defined in the config-driven-journeys.md
+
+### 3. Functional Requirements Compliance
+
+Verify implementation matches these critical requirements from the BRD:
+
+- **FR-01**: System renders journeys defined entirely by Genome JSON
+- **FR-02**: JSON Schema validation in CI and runtime
+- **FR-03**: One Gene per Strand in MVP
+- **FR-04**: Collect Alleles and produce quote API compatible payload
+- **FR-05**: Emit GA4 events: `strand_view`, `gene_view`, `gene_answer`, `journey_complete`
+- **FR-06**: Support variant selection via feature flags for A/B testing
+
+### 4. Architecture Standards
+
+- Store Alleles in Jotai atoms as specified
+- Follow the Bulletproof React folder structure conventions
+- Implement the Polymerase engine pattern for runtime interpretation
+- Support the Gene Registry mapping system for UI components
+- Build pluggable Payload Builder for API integration
+
+## Implementation Verification Protocol
+
+### Pre-Development Checklist
+
+- [ ] Read relevant business documents thoroughly
+- [ ] Understand the specific requirements being implemented
+- [ ] Verify the terminology and architecture patterns to follow
+- [ ] Check for any existing implementation patterns to maintain consistency
+
+### During Development Verification
+
+- [ ] Cross-reference implementation against the BRD functional requirements
+- [ ] Ensure JSON schema compliance for any Genome-related code
+- [ ] Validate that component naming follows the DNA terminology
+- [ ] Test that analytics events align with the specified GA4 schema
+- [ ] Verify A/B testing capability through feature flag integration
+
+### Implementation vs. Design Mismatch Protocol
+
+When you identify a discrepancy between the current implementation and the business specification:
+
+1. **STOP implementation immediately**
+2. **Document the specific mismatch clearly:**
+   - What the specification says
+   - What the current implementation does
+   - Why they differ (if apparent)
+3. **Prompt the user with options:**
+
+   ```
+   🚨 SPECIFICATION MISMATCH DETECTED
+
+   Specification says: [specific requirement from docs]
+   Current implementation: [what exists now]
+
+   How would you like to proceed?
+   A) Fix the implementation to match the specification
+   B) Update the specification to match the new requirements
+   C) Discuss and determine the correct approach
+   ```
+
+4. **Do not proceed** until the user provides direction
+
+## Documentation Update Requirements
+
+When updating any business documents in `./Helixium/docs/`, you must maintain a revision history table using this format:
+
+```markdown
+## Revision History
+
+| Version | Date       | Updated By   | Changes Made                               | Reason                                                |
+| ------- | ---------- | ------------ | ------------------------------------------ | ----------------------------------------------------- |
+| v0.2    | 2025-01-15 | [Your Name]  | Updated Gene types to include 'fileUpload' | Added file upload requirement for document collection |
+| v0.1    | 2025-08-16 | Product Team | Initial version                            | Initial business requirements definition              |
+```
+
+### Documentation Update Guidelines:
+
+- Always add entries to the top of the revision table (newest first)
+- Include specific details about what changed, not just "updated content"
+- Provide clear business rationale for changes
+- Update the document version number in the frontmatter
+- Ensure all stakeholders are aware of specification changes
+
+## Success Metrics Alignment
+
+Ensure all implementations contribute to the defined business goals:
+
+- **G1**: Increase journey completion rate (+10% target)
+- **G2**: Accelerate iteration speed (< 4h config + review)
+- **G3**: Support A/B testing (≥ 2 concurrent variants)
+- **G4**: Simplify maintenance (≤ 1h per new question)
+- **G5**: Ensure data quality (0 blocking schema errors)
+
+## Non-Functional Requirements
+
+Maintain these standards in all implementations:
+
+- **Performance**: Page transitions ≤ 300ms
+- **Accessibility**: WCAG 2.1 AA compliance for all Gene components
+- **Security**: Answers held only in memory until submission
+- **Modularity**: Core engine packageable as `@helixium/journey-engine`
+
+## Emergency Procedures
+
+If you discover a critical mismatch that could affect production or user experience:
+
+1. Flag the issue immediately to the user
+2. Document the impact and urgency level
+3. Provide options for immediate mitigation
+4. Ensure proper stakeholder notification for specification changes
+5. Update documentation with emergency change procedures
+
+---
+
+**Remember**: The journey engine is the core differentiator for Helixium. Strict adherence to these specifications ensures we deliver on the business vision while maintaining code quality and user experience standards.
