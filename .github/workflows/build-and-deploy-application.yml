@@ -437,7 +437,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "@here 🚀 Helixium Deployment ${{ steps.summary.outputs.deployment-status == 'success' && '✅ Successful' || '❌ Failed' }}",
+              "text": "<!here> 🚀 Helixium Deployment ${{ steps.summary.outputs.deployment-status == 'success' && '✅ Successful' || '❌ Failed' }}",
               "blocks": [
                 {
                   "type": "header",

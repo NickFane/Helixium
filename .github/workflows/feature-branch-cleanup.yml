@@ -112,7 +112,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "@here 🧹 Feature/Cursor Branch Cleanup Completed",
+              "text": "<!here> 🧹 Feature/Cursor Branch Cleanup Completed",
               "blocks": [
                 {
                   "type": "header",
