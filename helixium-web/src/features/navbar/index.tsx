@@ -37,7 +37,6 @@ const NavBarItems = () => {
   return (
     <>
       <NavLink to="/">Home</NavLink>
-      <NavLink to="/SampleFormRoute">Sample Form</NavLink>
       <NavLink to="/form-builder">Form Builder</NavLink>
     </>
   );
