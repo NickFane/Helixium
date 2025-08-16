@@ -1,4 +1,4 @@
-import { Box, HStack, Text, Button, Separator } from "@chakra-ui/react";
+import { Box, HStack, Button } from "@chakra-ui/react";
 import { Link, useLocation } from "@tanstack/react-router";
 import { useMemo } from "react";
 
@@ -13,6 +13,29 @@ interface SubNavConfig {
   [routePrefix: string]: SubNavItem[];
 }
 
+// Configuration for sub-navigation based on route prefixes
+const getSubNavConfig = (currentPath: string): SubNavConfig => ({
+  "/form-builder": [
+    {
+      label: "Overview",
+      path: "/form-builder",
+      isActive:
+        currentPath === "/form-builder" || currentPath === "/form-builder/",
+    },
+    {
+      label: "Demos",
+      path: "/form-builder/demos/gene-reusability", // Link to first available demo
+      isActive: currentPath.startsWith("/form-builder/demos"),
+    },
+    {
+      label: "Utilities",
+      path: "/form-builder/utilities",
+      isActive: currentPath.startsWith("/form-builder/utilities"),
+      isDisabled: true, // Not implemented yet
+    },
+  ],
+});
+
 /**
  * SubNavbar - A secondary navigation bar that appears on routes with sub-routes
  *
@@ -23,32 +46,11 @@ const SubNavbar = () => {
   const location = useLocation();
   const currentPath = location.pathname;
 
-  // Configuration for sub-navigation based on route prefixes
-  const subNavConfig: SubNavConfig = {
-    "/form-builder": [
-      {
-        label: "Overview",
-        path: "/form-builder",
-        isActive:
-          currentPath === "/form-builder" || currentPath === "/form-builder/",
-      },
-      {
-        label: "Demos",
-        path: "/form-builder/demos/gene-reusability", // Link to first available demo
-        isActive: currentPath.startsWith("/form-builder/demos"),
-      },
-      {
-        label: "Utilities",
-        path: "/form-builder/utilities",
-        isActive: currentPath.startsWith("/form-builder/utilities"),
-        isDisabled: true, // Not implemented yet
-      },
-    ],
-  };
-
   // Determine which sub-nav to show based on current route
   const activeSubNav = useMemo(() => {
-    for (const [routePrefix, navItems] of Object.entries(subNavConfig)) {
+    for (const [routePrefix, navItems] of Object.entries(
+      getSubNavConfig(currentPath)
+    )) {
       if (currentPath.startsWith(routePrefix)) {
         return navItems;
       }
