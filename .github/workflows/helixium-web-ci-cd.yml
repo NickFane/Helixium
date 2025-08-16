@@ -383,7 +383,7 @@ jobs:
           channel-id: ${{ secrets.SLACK_CHANNEL_ID }}
           payload: |
             {
-              "text": "@here 🌿 Feature/Cursor Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
+              "text": "<!here> 🌿 Feature/Cursor Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}",
               "blocks": [
                 {
                   "type": "header",
