@@ -100,7 +100,8 @@ const SubNavbar = () => {
               ) : (
                 <Link to={item.path}>
                   <Box
-                    as="span"
+                    as="button"
+                    role="button"
                     px={3}
                     py={2}
                     borderRadius="md"
@@ -117,6 +118,13 @@ const SubNavbar = () => {
                       bg: "gray.600",
                     }}
                     transition="all 0.2s"
+                    border="none"
+                    outline="none"
+                    _focus={{
+                      outline: "2px solid",
+                      outlineColor: "blue.400",
+                      outlineOffset: "2px",
+                    }}
                   >
                     {item.label}
                   </Box>
