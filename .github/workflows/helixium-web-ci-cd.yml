@@ -387,13 +387,6 @@ jobs:
               "link_names": true,
               "blocks": [
                 {
-                  "type": "section",
-                  "text": {
-                    "type": "mrkdwn",
-                    "text": "<!here> 🌿 Feature/Cursor Branch ${{ job.status == 'success' && '✅ Deployed' || '❌ Deployment Failed' }}"
-                  }
-                },
-                {
                   "type": "header",
                   "text": {
                     "type": "plain_text",
