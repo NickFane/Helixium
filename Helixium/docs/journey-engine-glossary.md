@@ -28,4 +28,4 @@ This glossary standardises the language used throughout Helixium’s **Journey E
 
 ---
 
-##### Last updated: <!-- date placeholder -->
+##### Last updated: 2025-08-16
