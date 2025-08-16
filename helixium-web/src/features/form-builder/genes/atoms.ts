@@ -5,10 +5,18 @@ import { atomFamily } from "jotai/utils";
  * Allele (answer value) atom family for genes
  * This allows external components to access gene values by ID
  * Usage: const alleleAtom = geneAlleleAtomFamily(geneId);
+ * 
+ * Note: geneId is used by atomFamily for atom creation/caching, 
+ * but individual atoms don't need the ID for basic string storage
  */
-export const geneAlleleAtomFamily = atomFamily((_geneId: string) =>
-  atom<string>("")
-);
+export const geneAlleleAtomFamily = atomFamily((geneId: string) => {
+  const baseAtom = atom<string>("");
+
+  // Set debug label for better debugging (uses geneId)
+  baseAtom.debugLabel = `gene-allele-${geneId}`;
+
+  return baseAtom;
+});
 
 /**
  * Gene registry atom to track all active genes
@@ -33,12 +41,12 @@ export const registerGeneAtom = atom(null, (get, set, geneId: string) => {
 export const getAllGenesValuesAtom = atom((get) => {
   const registry = get(geneRegistryAtom);
   const values: Record<string, string> = {};
-  
+
   registry.forEach((geneId) => {
     const alleleAtom = geneAlleleAtomFamily(geneId);
     values[geneId] = get(alleleAtom);
   });
-  
+
   return values;
 });
 
@@ -46,7 +54,7 @@ export const getAllGenesValuesAtom = atom((get) => {
  * Helper function to get a specific gene value by ID
  * Usage: const value = get(getGeneValueByIdAtom(geneId));
  */
-export const getGeneValueByIdAtom = (geneId: string) => 
+export const getGeneValueByIdAtom = (geneId: string) =>
   atom((get) => {
     const alleleAtom = geneAlleleAtomFamily(geneId);
     return get(alleleAtom);
