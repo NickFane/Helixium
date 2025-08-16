@@ -151,8 +151,6 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-
-
       # Note: PR builds should NOT push to ECR - this step has been removed
       # PR validation is handled by helixium-web-ci-cd.yml workflow
 
@@ -438,7 +436,15 @@ jobs:
           payload: |
             {
               "text": "<!here> 🚀 Helixium Deployment ${{ steps.summary.outputs.deployment-status == 'success' && '✅ Successful' || '❌ Failed' }}",
+              "link_names": true,
               "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<!here> 🚀 Helixium Deployment ${{ steps.summary.outputs.deployment-status == 'success' && '✅ Successful' || '❌ Failed' }}"
+                  }
+                },
                 {
                   "type": "header",
                   "text": {

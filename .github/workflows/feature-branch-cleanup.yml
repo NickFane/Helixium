@@ -113,7 +113,15 @@ jobs:
           payload: |
             {
               "text": "<!here> 🧹 Feature/Cursor Branch Cleanup Completed",
+              "link_names": true,
               "blocks": [
+                {
+                  "type": "section",
+                  "text": {
+                    "type": "mrkdwn",
+                    "text": "<!here> 🧹 Feature/Cursor Branch Cleanup Completed"
+                  }
+                },
                 {
                   "type": "header",
                   "text": {
