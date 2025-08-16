@@ -1,13 +1,11 @@
-import FormBuilder from "@/features/form-builder";
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, Outlet } from "@tanstack/react-router";
 
 export const Route = createFileRoute("/form-builder")({
-  component: FormBuilderRoute,
+  component: FormBuilderLayout,
 });
 
-function FormBuilderRoute() {
-  return <FormBuilder />;
+function FormBuilderLayout() {
+  return <Outlet />;
 }
 
-export default FormBuilderRoute;
-
+export default FormBuilderLayout;
